@@ -4,8 +4,7 @@
   "listeners": [
     {
       "type": {
-        "name": "Listener",
-        "packageInfo": { "org": "ballerinax", "packageName": "sap.jco", "moduleName": "sap.jco", "version": "2.0.0" }
+        "name": "Listener"
       },
       "services": ["$idocService", "$rfcService"],
       "multipleServicesAllowed": true,

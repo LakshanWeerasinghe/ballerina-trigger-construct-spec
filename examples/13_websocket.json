@@ -16,6 +16,7 @@
       "type": { "name": "UpgradeService" },
       "concrete": false,
       "multipleListenersAllowed": true,
+      "annotations": ["$serviceConfig"],
       "identifier": { "presence": "required", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
@@ -23,7 +24,7 @@
           {
             "name": "get",
             "kind": "resource",
-            "doc": "Handles the initial HTTP request and decides whether to upgrade it to a WebSocket connection. Return the service that will handle the resulting connection, or an error to reject the upgrade.",
+            "doc": "The only handler an upgrade service has. Runs on the initial HTTP request and decides whether to upgrade the connection. Return the service that will handle the resulting connection, or an UpgradeError to reject the upgrade.",
             "presence": "required",
             "accessor": { "presence": "required", "values": ["get"] },
             "path": { "presence": "required" },
@@ -47,7 +48,7 @@
       "id": "$service",
       "type": { "name": "Service" },
       "concrete": false,
-      "multipleListenersAllowed": true,
+      "multipleListenersAllowed": false,
       "handlers": {
         "backedByConcreteType": false,
         "options": [
@@ -69,7 +70,7 @@
           {
             "name": "onMessage",
             "kind": "remote",
-            "doc": "Invoked for every inbound message, text or binary alike. Declaring this handler rules out onTextMessage and onBinaryMessage, it already covers both.",
+            "doc": "Invoked for every inbound message, text or binary alike. Declaring this handler rules out onTextMessage and onBinaryMessage, it already covers both. It is also the fallback for a custom message type that matched no dispatched handler.",
             "presence": "optional",
             "params": [
               {
@@ -80,13 +81,13 @@
               },
               {
                 "name": "data",
-                "doc": "The inbound message, bound to the declared type, see the messagePayload data-binding rule.",
+                "doc": "The inbound message. A text frame deserializes straight to the declared type. A binary frame is read as bytes and then deserialized, unless the declared type is byte[]. A binding failure closes the connection with status 1003.",
                 "type": { "name": "anydata" },
                 "presence": "required",
                 "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata" }, "shapes": [{ "form": "bare" }] }] }
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "anydata" }, { "name": "CloseFrame" }, { "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onTextMessage",
@@ -100,9 +101,9 @@
                 "type": { "name": "Caller" },
                 "presence": "optional"
               },
-              { "name": "data", "doc": "The text frame's content.", "type": { "name": "string" }, "presence": "required" }
+              { "name": "text", "doc": "The text frame's content.", "type": { "name": "string" }, "presence": "required" }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "anydata" }, { "name": "CloseFrame" }, { "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onBinaryMessage",
@@ -118,12 +119,12 @@
               },
               { "name": "data", "doc": "The binary frame's content.", "type": { "name": "byte[]" }, "presence": "required" }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "anydata" }, { "name": "CloseFrame" }, { "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onPing",
             "kind": "remote",
-            "doc": "Invoked when the peer sends a ping frame.",
+            "doc": "Invoked when the peer sends a ping frame. Declaring it makes replying your responsibility, without it the library sends the pong automatically.",
             "presence": "optional",
             "params": [
               {
@@ -165,7 +166,7 @@
           {
             "name": "onIdleTimeout",
             "kind": "remote",
-            "doc": "Invoked when no message has arrived for the configured idle-timeout period.",
+            "doc": "Invoked when no message has arrived for the idleTimeout set in the service config. The listener's own timeout does not trigger it, that one covers only the initial upgrade request.",
             "presence": "optional",
             "params": [
               {
@@ -180,7 +181,7 @@
           {
             "name": "onClose",
             "kind": "remote",
-            "doc": "Invoked when the peer closes the connection.",
+            "doc": "Invoked when a close frame arrives from the peer.",
             "presence": "optional",
             "params": [
               {
@@ -207,7 +208,7 @@
           {
             "name": "onError",
             "kind": "remote",
-            "doc": "Invoked when the connection fails, or when an inbound message cannot be dispatched.",
+            "doc": "Invoked when the connection fails, always preceded by a connection closure with the matching close frame. Also the fallback for a binding failure when no matching custom error handler is declared.",
             "presence": "optional",
             "params": [
               {
@@ -219,7 +220,51 @@
               {
                 "name": "err",
                 "doc": "The failure that interrupted the connection.",
-                "type": { "name": "Error" },
+                "type": { "name": "error" },
+                "presence": "required"
+              }
+            ],
+            "returns": [{ "name": "error" }, { "name": "()" }]
+          },
+          {
+            "name": "*",
+            "kind": "remote",
+            "addMode": "many",
+            "doc": "A custom dispatched handler. When the service config sets a dispatcherKey, the value of that field in an inbound message picks the handler by name: the value is camel cased and prefixed with on, so an event of \"heartbeat\" reaches onHeartbeat. A DispatcherConfig annotation overrides that derivation with an explicit dispatcherValue. A message matching nothing falls back to onMessage, or is ignored when that is absent too.",
+            "annotations": ["$dispatcherConfig"],
+            "params": [
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              {
+                "name": "message",
+                "doc": "The inbound message, bound to the declared type.",
+                "type": { "name": "anydata" },
+                "presence": "required",
+                "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata" }, "shapes": [{ "form": "bare" }] }] }
+              }
+            ],
+            "returns": [{ "name": "anydata" }, { "name": "CloseFrame" }, { "name": "error" }, { "name": "()" }]
+          },
+          {
+            "name": "*",
+            "kind": "remote",
+            "addMode": "many",
+            "doc": "A custom error handler, paired to a dispatched handler by name: that handler's name plus Error, so onHeartbeat pairs with onHeartbeatError. It receives the binding failure for that message type. Without it the failure falls back to onError.",
+            "params": [
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              {
+                "name": "err",
+                "doc": "The failure that prevented the message from binding.",
+                "type": { "name": "error" },
                 "presence": "required"
               }
             ],
@@ -228,21 +273,6 @@
         ]
       },
       "rules": [
-        {
-          "id": "$atLeastOneHandler",
-          "rule": "structure.atLeastOne",
-          "message": "A WebSocket service must declare at least one handler other than onError. onError alone never receives a message or a lifecycle event.",
-          "subjects": [
-            { "kind": "handler", "name": "onOpen" },
-            { "kind": "handler", "name": "onMessage" },
-            { "kind": "handler", "name": "onTextMessage" },
-            { "kind": "handler", "name": "onBinaryMessage" },
-            { "kind": "handler", "name": "onPing" },
-            { "kind": "handler", "name": "onPong" },
-            { "kind": "handler", "name": "onIdleTimeout" },
-            { "kind": "handler", "name": "onClose" }
-          ]
-        },
         {
           "id": "$textMessageVsGeneric",
           "rule": "structure.atMostOne",
@@ -255,12 +285,12 @@
           "message": "onMessage and onBinaryMessage cannot coexist, onMessage already receives binary frames.",
           "subjects": [{ "kind": "handler", "name": "onMessage" }, { "kind": "handler", "name": "onBinaryMessage" }]
         }
-      ],
-      "annotations": ["$serviceConfig"]
+      ]
     }
   ],
 
   "annotations": [
-    { "id": "$serviceConfig", "type": { "name": "ServiceConfig" }, "attachPoint": "service", "presence": "optional" }
+    { "id": "$serviceConfig", "type": { "name": "ServiceConfig" }, "attachPoint": "service", "presence": "optional" },
+    { "id": "$dispatcherConfig", "type": { "name": "DispatcherConfig" }, "attachPoint": "function", "presence": "optional" }
   ]
 }
