@@ -1,19 +1,22 @@
-// Ballerina type definitions for the Trigger Construct Spec (v1).
+// Ballerina type definitions for the Trigger Construct Spec (v1.0).
 // Mirrors spec.md field-by-field; see spec.md for full semantics and worked examples.
 
 # The root trigger-model document.
 #
-# + version - Schema version this instance conforms to, e.g. `"v1"`
+# + version - Spec version, as `v<major>.<minor>`. Minor is additive and must stay readable by an
+#             older `v1.x` consumer. Major is structural and must be refused. See spec.md
+#             section 11
 # + listeners - Listener entry points
 # + serviceTypes - Service-type alternatives this connector exposes
 # + annotations - Registry of annotation types referenced elsewhere, defined once
-# + dataBindingRules - Registry of payload/data-binding modes, defined once
+# + rules - Constraints spanning more than one service type. Rules scoped to a single service type
+#           live on that `ServiceType` instead; every `Subject` here must name its `serviceType`
 public type TriggerModel record {|
     string version;
     Listener[] listeners;
     ServiceType[] serviceTypes;
     Annotation[] annotations?;
-    DataBindingRule[] dataBindingRules?;
+    Rule[] rules?;
 |};
 
 # A reference to a Ballerina type, optionally qualified with cross-module package info.
@@ -25,7 +28,7 @@ public type TypeRef record {|
     PackageInfo packageInfo?;
 |};
 
-# Coordinates identifying the package/module a cross-module `TypeRef` comes from.
+# Coordinates identifying the package/module a cross-module type reference comes from.
 #
 # + org - The organization that owns the package
 # + packageName - The package name
@@ -48,39 +51,99 @@ public type Presence "required"|"optional";
 #
 # + 'type - `TypeRef` for the listener class
 # + services - `ServiceType.id` values this listener can host
+# + multipleServicesAllowed - Can one instance of this listener host more than one service at all?
+# + multipleServicesOfSameTypeAllowed - Can two of those services be of the same `ServiceType`?
+#                                       Omitted when `multipleServicesAllowed` is `false`, where it
+#                                       is impossible anyway. Absent means unconstrained
 # + requiredImports - Side-effect-only imports needed at runtime, never referenced by name
+# + platformDependencies - Native/binary dependencies needed at build time, never referenced by
+#                          Ballerina `import`
 public type Listener record {|
     TypeRef 'type;
     string[] services;
+    boolean multipleServicesAllowed;
+    boolean multipleServicesOfSameTypeAllowed?;
     RequiredImport[] requiredImports?;
+    PlatformDependency[] platformDependencies?;
 |};
 
 # A package that must be imported for its side effect,
 # e.g. `import ballerinax/mssql.cdc.driver as _;`.
 #
-# + importType - Why this import is needed, e.g. `"driver"`
+# + importType - Why this import is needed, for example `"driver"`
 # + packageInfo - The package to import
 public type RequiredImport record {|
     "driver" importType;
     PackageInfo packageInfo;
 |};
 
+# A native/binary dependency that must be declared in `Ballerina.toml`'s
+# `[[platform.<javaVersion>.dependency]]` table, distinct from `RequiredImport` (a Ballerina
+# package `import`): this is a jar the build must put on the classpath, not something referenced
+# by module name. No `javaVersion`/`platform` key here, the generator knows the Java version of
+# the distribution it targets, so restating it per connector would go stale. No `path` either,
+# that is wherever the user places their own downloaded copy, which this metadata cannot know.
+#
+# + groupId - Maven-style group id for the artifact
+# + artifactId - Maven-style artifact id for the artifact
+# + version - Version, possibly a wildcard pattern, for example `3.1.*`
+# + scope - `"provided"` when the jar must stay compile-time-only (e.g. a vendor license forbids
+#           bundling it into the final artifact); absent means normally bundled
+# + acquisition - How to obtain the artifact when it is not resolvable from a public repository
+# + nativeLibraries - OS-specific native libraries this jar needs at run time
+public type PlatformDependency record {|
+    string groupId;
+    string artifactId;
+    string version;
+    "provided" scope?;
+    Acquisition acquisition?;
+    NativeLibrary[] nativeLibraries?;
+|};
+
+# How to obtain a dependency the build cannot resolve from a public repository.
+#
+# + url - Where to obtain it. Machine-actionable, a tool can link to it or open it, which a
+#         prose sentence alone does not allow
+# + note - What the user must do once there: licensing, which file to choose, and so on
+public type Acquisition record {|
+    string url?;
+    string note;
+|};
+
+# An OS specific native library the JVM must load at run time.
+#
+# Modeled separately from the jar because its absence is not a build failure. The package compiles
+# and the service then fails at run time, so nothing in the build graph records the requirement.
+#
+# No environment variable field, since it is determined by `os` and is stated once in spec.md
+# section 2.
+#
+# + os - Target operating system
+# + file - The library file name to install for that OS
+public type NativeLibrary record {|
+    "linux"|"windows"|"macos" os;
+    string file;
+|};
+
 # One service-type alternative this connector exposes.
 #
-# + id - Referenced from `Listener.services` and sibling constructs
+# + id - Referenced from `Listener.services` and sibling constructs. Every id starts with `$`
 # + 'type - `TypeRef` for the service object type
 # + concrete - `true` if the type declares its own methods directly (introspectable); `false` for marker/abstract types
 # + multipleListenersAllowed - Can one service instance attach to more than one listener at once?
-# + multipleServicesPerListenerAllowed - Can one listener host more than one service of this type at once?
+# + deprecated - Present only when the library still accepts this service type but no longer recommends it
+# + annotations - Ids into `TriggerModel.annotations`, `attachPoint: "service"`, the annotations
+#                 attachable to a service of this type
 # + identifier - Omitted entirely when the identifier slot carries no meaning for this service type
 # + handlers - The handler-shape block
 # + rules - Relationship constraints scoped to this service type
 public type ServiceType record {|
     string id;
     TypeRef 'type;
+    Deprecation deprecated?;
+    string[] annotations?;
     boolean concrete;
     boolean multipleListenersAllowed;
-    boolean multipleServicesPerListenerAllowed;
     IdentifierSpec identifier?;
     Handlers handlers;
     Rule[] rules?;
@@ -102,16 +165,31 @@ public type AddMode "many"|"subset";
 
 # The handler-shape block for a service type.
 #
-# + backedByConcreteType - `true` means the type's own declared methods are the handlers and `options` is empty
-# + addMode - Not present when `backedByConcreteType` is `true`
-# + options - The only source of truth for handler shapes when `backedByConcreteType` is `false`
+# + backedByConcreteType - `true` means the type's own declared methods are the handlers, and both
+#                          `addMode` and `options` are omitted, there is nothing this file could
+#                          say that introspecting the type would not already answer
+# + addMode - Omitted when `backedByConcreteType` is `true`
+# + options - The only source of truth for handler shapes when `backedByConcreteType` is `false`;
+#             omitted entirely when it is `true`
 public type Handlers record {|
     boolean backedByConcreteType;
     AddMode addMode?;
-    HandlerOption[] options;
+    HandlerOption[] options?;
 |};
 
 public type HandlerKind "remote"|"resource";
+
+# Marks a construct the library still accepts but no longer recommends.
+#
+# + reason - Why it is deprecated. Required, since a deprecation with no reason gives a generator
+#            nothing to relay
+# + since - Package version the deprecation took effect, when known
+# + replacement - What to use instead
+public type Deprecation record {|
+    string reason;
+    string since?;
+    string replacement?;
+|};
 
 # A `{presence, values|form}` constraint used by resource-kind handler extras
 # (HTTP's `method`/`path`, GraphQL's `accessor`/`fieldName`).
@@ -129,8 +207,12 @@ public type ValueSpec record {|
 #
 # + name - Handler method name, or `"*"` for an open/many-shaped handler
 # + kind - `remote` or `resource`
+# + doc - What this handler is for and when it fires. A handler described here has no concrete
+#         type behind it, so there is no doc comment to introspect
+# + deprecated - Present only when the library still accepts this handler but no longer recommends it
 # + presence - Only meaningful under `addMode: "subset"`
 # + annotations - Ids into the top-level `annotations[]`, `attachPoint: "function"`
+# + returnAnnotations - Ids into the top-level `annotations[]`, `attachPoint: "return"`
 # + params - The handler's parameter list
 # + returns - `TypeRef` or a union
 # + method - Resource-kind extra (HTTP): legal HTTP verbs
@@ -141,8 +223,11 @@ public type ValueSpec record {|
 public type HandlerOption record {|
     string name;
     HandlerKind kind;
+    string doc?;
+    Deprecation deprecated?;
     Presence presence?;
     string[] annotations?;
+    string[] returnAnnotations?;
     Param[] params?;
     TypeRefOrUnion 'returns?;
     ValueSpec method?;
@@ -154,95 +239,184 @@ public type HandlerOption record {|
 
 # One parameter of a handler option.
 #
-# + name - Optional domain-meaningful name; present only where source evidence shows it matters
+# + name - The parameter name to emit. Required on every fixed slot, since codegen renders the
+#          parameter from this entry alone. Omitted only when `addMode` is `"many"`, where the
+#          user names each occurrence
+# + doc - What this parameter carries. Same reason as `HandlerOption.doc`
+# + deprecated - Present only when the library still accepts this parameter but no longer recommends it
 # + 'type - `TypeRef` or a union; restates the full static surface even where `dataBinding` also implies it
 # + presence - `required` or `optional` for this slot
 # + addMode - `"many"` means this slot repeats zero or more times, each occurrence independently named/typed
-# + dataBinding - Id into `dataBindingRules[]`; present only when the raw value can be projected into a user-defined type
+# + dataBinding - Inline data binding for this slot; present only when the raw value can be
+#                 projected into a user-defined type
 # + annotations - Ids into `annotations[]`, `attachPoint: "parameter"`
 public type Param record {|
     string name?;
+    string doc?;
+    Deprecation deprecated?;
     TypeRefOrUnion 'type;
     Presence presence;
     "many" addMode?;
-    string dataBinding?;
+    DataBinding dataBinding?;
     string[] annotations?;
 |};
 
-# The kind of relationship a `Rule` expresses:
-# `oneOf` - exactly one member, not zero, not more than one.
-# `atMostOne` - zero or one member, never more than one.
-public type RuleType "oneOf"|"atMostOne";
-
-# A relationship constraint scoped to the enclosing `ServiceType`.
+# Fields common to every `Subject`.
 #
-# + id - Local identifier for this rule
-# + 'type - The relationship kind this rule expresses
-# + members - The participants in the relationship
-public type Rule record {|
-    string id;
-    RuleType 'type;
-    RuleMember[] members;
+# + serviceType - `ServiceType.id` this subject belongs to. Defaults to the enclosing service type
+#                 when the rule is nested; required in a top-level `TriggerModel.rules` entry
+# + role - This subject's name within its rule. Asymmetric constraints fix the legal names
+#          (e.g. `when`/`then`); symmetric ones use free-form labels, referenced by
+#          `Rule.prefer`/`Rule.reportOn`. Omit when the rule never needs to address it
+public type SubjectBase record {|
+    string serviceType?;
+    string role?;
 |};
 
-# One participant in a `Rule`. Exactly one of `annotation`+`field`, `part`, or `handler` is set.
+# The service's identifier / base-path slot.
 #
-# + annotation - Id of a top-level annotation
-# + field - Field name inside that annotation's record
-# + preferred - Marks the canonical/idiomatic choice for a generator to default to
-# + part - `"identifier"`, this service type's own identifier slot
-# + handler - One of this service type's own `HandlerOption.name` values
-public type RuleMember record {|
-    string 'annotation?;
-    string 'field?;
-    boolean preferred?;
-    "identifier" part?;
-    string handler?;
+# + kind - Discriminator for this subject shape
+public type IdentifierSubject record {|
+    *SubjectBase;
+    "identifier" kind;
+|};
+
+# An annotation as a whole, its presence, not any field inside it.
+#
+# + kind - Discriminator for this subject shape
+# + name - Id into `TriggerModel.annotations`
+public type AnnotationSubject record {|
+    *SubjectBase;
+    "annotation" kind;
+    string name;
+|};
+
+# One field inside an annotation's value.
+#
+# + kind - Discriminator for this subject shape
+# + annotation - Id into `TriggerModel.annotations`
+# + path - Field path within that annotation's record; multi-element for nested fields,
+#          e.g. `["retryConfig", "maxCount"]`
+public type AnnotationFieldSubject record {|
+    *SubjectBase;
+    "annotationField" kind;
+    string 'annotation;
+    string[] path;
+|};
+
+# A handler function.
+#
+# + kind - Discriminator for this subject shape
+# + name - One of the service type's `HandlerOption.name` values
+public type HandlerSubject record {|
+    *SubjectBase;
+    "handler" kind;
+    string name;
+|};
+
+# One parameter of a handler function.
+#
+# + kind - Discriminator for this subject shape
+# + handler - The enclosing handler's name
+# + name - The parameter's `Param.name`
+public type ParamSubject record {|
+    *SubjectBase;
+    "param" kind;
+    string handler;
+    string name;
+|};
+
+# What a `Rule` constrains. A tagged union discriminated by `kind`. A consumer that does not
+# recognise a `kind` skips the rule with a warning, the same policy as an unknown `Rule.rule` id.
+public type Subject IdentifierSubject|AnnotationSubject|AnnotationFieldSubject|HandlerSubject|ParamSubject;
+
+# Whether a rule violation blocks or merely advises.
+public type Severity "error"|"warning";
+
+# A relationship constraint. Rules are referenced, never defined here. `rule` names a constraint
+# from an open registry the consumer already implements. Adding a constraint is a registry entry,
+# not a schema change.
+#
+# + id - Stable identifier, unique within the file; surfaces in the emitted diagnostic
+# + rule - Registry id such as `structure.exactlyOne`. Open vocabulary, so an unknown id is
+#          skipped rather than failed
+# + subjects - What this constraint ranges over
+# + args - Constraint specific parameters. Unused by the corpus so far, present so a new
+#          parameterized check can ship without a schema revision
+# + severity - Defaults to `"error"`
+# + message - Diagnostic text, supporting `{placeholder}` interpolation from `args`. Recommended
+# + reportOn - `role` of the subject the diagnostic points at. Defaults to the service declaration
+# + prefer - `role` a generator should default to. A hint, never part of the constraint
+public type Rule record {|
+    string id;
+    string rule;
+    Subject[] subjects;
+    map<anydata> args?;
+    Severity severity?;
+    string message?;
+    string reportOn?;
+    string prefer?;
 |};
 
 public type AttachPoint "service"|"function"|"parameter"|"return";
 
 # A reusable annotation reference, defined once and referenced by id elsewhere.
 #
-# + id - Referenced from `Param.annotations`, `HandlerOption.annotations`, or `RuleMember.annotation`
+# + id - Referenced from whichever construct the annotation attaches to: `ServiceType.annotations`
+#        (service), `HandlerOption.annotations` (function), `HandlerOption.returnAnnotations`
+#        (return), `Param.annotations` (parameter), or a `Rule` subject of kind
+#        `annotation`/`annotationField`
 # + 'type - `TypeRef` for the annotation type, can be cross-module
-# + attachPoint - Where this annotation attaches in Ballerina source
-# + appliesTo - `ServiceType.id` array; include only when no other reference already links this annotation
+# + attachPoint - Where this annotation attaches in Ballerina source. Determines which construct
+#                 field carries the reference, every attach point has a precise one, so there is
+#                 no reverse `appliesTo` list
 # + presence - Whether this annotation must be attached at all
 public type Annotation record {|
     string id;
     TypeRef 'type;
     AttachPoint attachPoint;
-    string[] appliesTo?;
     Presence presence;
 |};
 
-public type DataBindingMode "direct"|"includedRecord"|"streamable";
+public type ShapeForm "bare"|"array"|"stream"|"included";
 
-# One binding mode a `DataBindingRule` supports.
+# One legal embedding of a `TypedescVariant`'s bound type in the final declared type.
 #
-# + mode - `direct` (param type directly is the target, no wrapping), `includedRecord` (user
-#          record does `*EnvelopeType;`, overrides only `bindableFields`), or `streamable`
-#          (same as `direct`, but `stream<...>` over the target type)
-# + typeConstraint - Legal alternatives, for `direct`/`streamable` modes
-# + excludes - Types excluded from `typeConstraint`'s general category, e.g. `anydata` excluding the envelope type
-# + includes - The base record being included via `*Type;`, for `includedRecord` mode
-# + bindableFields - Field names the user's record is free to override, for `includedRecord` mode
-public type SupportedMode record {|
-    DataBindingMode mode;
-    TypeRef[] typeConstraint?;
-    TypeRef[] excludes?;
-    TypeRef includes?;
+# + form - `bare` (T stands alone, no wrapping), `array` (`T[]`), `stream` (`stream<T, ...>`), or
+#          `included` (T spliced into one field of a fixed envelope record via `*Envelope;`)
+# + element - For `array`/`stream`: whether each element is `bare` or an `included` record
+# + envelope - For `included` (bare or nested under `array`/`stream`): the record spliced in via `*Envelope;`
+# + bindableFields - For `included`: field names bound to this variant's typedesc; every other
+#                    field of `envelope` stays fixed
+# + completionType - For `stream`: the stream's completion type, for example `error?`
+public type Shape record {|
+    ShapeForm form;
+    "bare"|"included" element?;
+    TypeRef envelope?;
     string[] bindableFields?;
+    TypeRef completionType?;
 |};
 
-# One data-binding rule, defined once and referenced by id from `Param.dataBinding`.
+# One independent `typedesc<T>`-bound variant within a `DataBinding`. Variants never share a
+# bound or shapes with one another, each is fully self-describing, even when its values happen
+# to coincide with another variant's. A rule with two alternative bounds that share identical
+# shapes (e.g. `json` or `record {}`, both bare) is two variants, not one variant with a union
+# `constraint`, `constraint` names exactly one type, so the variant itself stays simple.
 #
-# + id - Referenced from `Param.dataBinding`
-# + cardinality - `"array"` means the bound value is a batch; a mode's type is the array element type
-# + supportedModes - The legal binding modes for this rule
-public type DataBindingRule record {|
-    string id;
-    "array" cardinality?;
-    SupportedMode[] supportedModes;
+# + constraint - This variant's `typedesc<T>` upper bound, exactly one type, never a union
+# + excludes - Instantiations excluded from this variant's bound because another variant already
+#              owns them (e.g. an envelope type excluded from a `bare` shape's `anydata` bound,
+#              since that instantiation belongs to this rule's `included` variant instead)
+# + shapes - Legal embeddings of this variant's bound; not shared with other variants
+public type TypedescVariant record {|
+    TypeRef constraint;
+    TypeRef[] excludes?;
+    Shape[] shapes;
+|};
+
+# Data binding for one parameter slot, written inline on the `Param` it belongs to.
+#
+# + typedescs - Independent typedesc variants; each carries its own bound and its own legal shapes
+public type DataBinding record {|
+    TypedescVariant[] typedescs;
 |};

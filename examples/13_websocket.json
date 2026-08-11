@@ -1,26 +1,22 @@
 {
-  "version": "v1",
+  "version": "v1.0",
 
   "listeners": [
     {
       "type": { "name": "Listener" },
-      "services": ["upgradeService"]
+      "services": ["$upgradeService"],
+      "multipleServicesAllowed": true,
+      "multipleServicesOfSameTypeAllowed": true
     }
   ],
 
   "serviceTypes": [
     {
-      "id": "upgradeService",
+      "id": "$upgradeService",
       "type": { "name": "UpgradeService" },
       "concrete": false,
       "multipleListenersAllowed": true,
-      "multipleServicesPerListenerAllowed": true,
-
-      "identifier": {
-        "presence": "required",
-        "form": ["basePath"]
-      },
-
+      "identifier": { "presence": "required", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
         "addMode": "subset",
@@ -28,12 +24,18 @@
           {
             "name": "get",
             "kind": "resource",
+            "doc": "Handles the initial HTTP request and decides whether to upgrade it to a WebSocket connection. Return the service that will handle the resulting connection, or an error to reject the upgrade.",
             "presence": "required",
             "method": { "presence": "required", "values": ["get"] },
             "path": { "presence": "required", "form": ["stringLiteralSegment"] },
             "params": [
               {
-                "type": { "name": "Request", "packageInfo": { "org": "ballerina", "packageName": "http", "moduleName": "http", "version": "2.16.5" } },
+                "name": "request",
+                "doc": "The HTTP request that initiated the upgrade, inspect its headers here to authenticate or route before accepting.",
+                "type": {
+                  "name": "Request",
+                  "packageInfo": { "org": "ballerina", "packageName": "http", "moduleName": "http", "version": "2.16.5" }
+                },
                 "presence": "optional"
               }
             ],
@@ -43,12 +45,10 @@
       }
     },
     {
-      "id": "service",
+      "id": "$service",
       "type": { "name": "Service" },
       "concrete": false,
       "multipleListenersAllowed": true,
-      "multipleServicesPerListenerAllowed": true,
-
       "handlers": {
         "backedByConcreteType": false,
         "addMode": "subset",
@@ -56,132 +56,198 @@
           {
             "name": "onOpen",
             "kind": "remote",
+            "doc": "Invoked once, after the handshake completes and the connection is established.",
             "presence": "optional",
             "params": [
-              { "name": "caller", "type": { "name": "Caller" }, "presence": "optional" }
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
             ],
             "returns": [{ "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onMessage",
             "kind": "remote",
+            "doc": "Invoked for every inbound message, text or binary alike. Declaring this handler rules out onTextMessage and onBinaryMessage, it already covers both.",
             "presence": "optional",
             "params": [
-              { "name": "caller", "type": { "name": "Caller" }, "presence": "optional" },
-              { "name": "data", "type": { "name": "anydata" }, "presence": "required", "dataBinding": "messagePayload" }
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              {
+                "name": "data",
+                "doc": "The inbound message, bound to the declared type, see the messagePayload data-binding rule.",
+                "type": { "name": "anydata" },
+                "presence": "required",
+                "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata" }, "shapes": [{ "form": "bare" }] }] }
+              }
             ],
             "returns": [{ "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onTextMessage",
             "kind": "remote",
+            "doc": "Invoked for every inbound text frame.",
             "presence": "optional",
             "params": [
-              { "name": "caller", "type": { "name": "Caller" }, "presence": "optional" },
-              { "name": "data", "type": { "name": "string" }, "presence": "required" }
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              { "name": "data", "doc": "The text frame's content.", "type": { "name": "string" }, "presence": "required" }
             ],
             "returns": [{ "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onBinaryMessage",
             "kind": "remote",
+            "doc": "Invoked for every inbound binary frame.",
             "presence": "optional",
             "params": [
-              { "name": "caller", "type": { "name": "Caller" }, "presence": "optional" },
-              { "name": "data", "type": { "name": "byte[]" }, "presence": "required" }
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              { "name": "data", "doc": "The binary frame's content.", "type": { "name": "byte[]" }, "presence": "required" }
             ],
             "returns": [{ "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onPing",
             "kind": "remote",
+            "doc": "Invoked when the peer sends a ping frame.",
             "presence": "optional",
             "params": [
-              { "name": "caller", "type": { "name": "Caller" }, "presence": "optional" },
-              { "name": "data", "type": { "name": "byte[]" }, "presence": "required" }
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              {
+                "name": "data",
+                "doc": "The ping frame's application data.",
+                "type": { "name": "byte[]" },
+                "presence": "required"
+              }
             ],
             "returns": [{ "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onPong",
             "kind": "remote",
+            "doc": "Invoked when the peer sends a pong frame, normally in reply to a ping this service sent.",
             "presence": "optional",
             "params": [
-              { "name": "caller", "type": { "name": "Caller" }, "presence": "optional" },
-              { "name": "data", "type": { "name": "byte[]" }, "presence": "required" }
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              {
+                "name": "data",
+                "doc": "The pong frame's application data.",
+                "type": { "name": "byte[]" },
+                "presence": "required"
+              }
             ],
             "returns": { "name": "()" }
           },
           {
             "name": "onIdleTimeout",
             "kind": "remote",
+            "doc": "Invoked when no message has arrived for the configured idle-timeout period.",
             "presence": "optional",
             "params": [
-              { "name": "caller", "type": { "name": "Caller" }, "presence": "optional" }
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              }
             ],
             "returns": [{ "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onClose",
             "kind": "remote",
+            "doc": "Invoked when the peer closes the connection.",
             "presence": "optional",
             "params": [
-              { "name": "caller", "type": { "name": "Caller" }, "presence": "optional" },
-              { "name": "statusCode", "type": { "name": "int" }, "presence": "required" },
-              { "name": "reason", "type": { "name": "string" }, "presence": "required" }
+              {
+                "name": "caller",
+                "doc": "Handle for this connection, already closing, sends will not reach the peer.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              {
+                "name": "statusCode",
+                "doc": "The WebSocket close status code the peer sent.",
+                "type": { "name": "int" },
+                "presence": "required"
+              },
+              {
+                "name": "reason",
+                "doc": "The human-readable close reason the peer sent.",
+                "type": { "name": "string" },
+                "presence": "required"
+              }
             ],
             "returns": { "name": "()" }
           },
           {
             "name": "onError",
             "kind": "remote",
+            "doc": "Invoked when the connection fails, or when an inbound message cannot be dispatched.",
             "presence": "optional",
             "params": [
-              { "name": "caller", "type": { "name": "Caller" }, "presence": "optional" },
-              { "name": "err", "type": { "name": "Error" }, "presence": "required" }
+              {
+                "name": "caller",
+                "doc": "Handle for sending messages back over this connection.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              {
+                "name": "err",
+                "doc": "The failure that interrupted the connection.",
+                "type": { "name": "Error" },
+                "presence": "required"
+              }
             ],
             "returns": [{ "name": "error" }, { "name": "()" }]
           }
         ]
       },
-
       "rules": [
         {
-          "id": "textMessageVsGeneric",
-          "type": "atMostOne",
-          "members": [
-            { "handler": "onMessage" },
-            { "handler": "onTextMessage" }
-          ]
+          "id": "$textMessageVsGeneric",
+          "rule": "structure.atMostOne",
+          "message": "onMessage and onTextMessage cannot coexist, onMessage already receives text frames.",
+          "subjects": [{ "kind": "handler", "name": "onMessage" }, { "kind": "handler", "name": "onTextMessage" }]
         },
         {
-          "id": "binaryMessageVsGeneric",
-          "type": "atMostOne",
-          "members": [
-            { "handler": "onMessage" },
-            { "handler": "onBinaryMessage" }
-          ]
+          "id": "$binaryMessageVsGeneric",
+          "rule": "structure.atMostOne",
+          "message": "onMessage and onBinaryMessage cannot coexist, onMessage already receives binary frames.",
+          "subjects": [{ "kind": "handler", "name": "onMessage" }, { "kind": "handler", "name": "onBinaryMessage" }]
         }
-      ]
+      ],
+      "annotations": ["$serviceConfig"]
     }
   ],
 
   "annotations": [
-    {
-      "id": "serviceConfig",
-      "type": { "name": "ServiceConfig" },
-      "attachPoint": "service",
-      "appliesTo": ["service"],
-      "presence": "optional"
-    }
-  ],
-
-  "dataBindingRules": [
-    {
-      "id": "messagePayload",
-      "supportedModes": [
-        { "mode": "direct", "typeConstraint": [{ "name": "anydata" }] }
-      ]
-    }
+    { "id": "$serviceConfig", "type": { "name": "ServiceConfig" }, "attachPoint": "service", "presence": "optional" }
   ]
 }

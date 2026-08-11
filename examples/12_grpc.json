@@ -1,21 +1,16 @@
 {
-  "version": "v1",
+  "version": "v1.0",
 
   "listeners": [
-    {
-      "type": { "name": "Listener" },
-      "services": ["service"]
-    }
+    { "type": { "name": "Listener" }, "services": ["$service"], "multipleServicesAllowed": true }
   ],
 
   "serviceTypes": [
     {
-      "id": "service",
+      "id": "$service",
       "type": { "name": "Service" },
       "concrete": false,
       "multipleListenersAllowed": true,
-      "multipleServicesPerListenerAllowed": true,
-
       "handlers": {
         "backedByConcreteType": false,
         "addMode": "many",
@@ -23,49 +18,52 @@
           {
             "name": "unary",
             "kind": "remote",
-            "params": [
-              { "type": { "name": "anydata" }, "presence": "required" }
-            ],
+            "doc": "Handles a unary RPC, one request message in, one response message out.",
+            "params": [{ "name": "request", "doc": "The inbound request message.", "type": { "name": "anydata" }, "presence": "required" }],
             "returns": [{ "name": "anydata" }, { "name": "error" }]
           },
           {
             "name": "serverStreaming",
             "kind": "remote",
-            "params": [
-              { "type": { "name": "anydata" }, "presence": "required" }
-            ],
+            "doc": "Handles a server-streaming RPC, one request message in, a stream of response messages out.",
+            "params": [{ "name": "request", "doc": "The inbound request message.", "type": { "name": "anydata" }, "presence": "required" }],
             "returns": { "name": "stream<anydata, Error?>" }
           },
           {
             "name": "clientStreaming",
             "kind": "remote",
+            "doc": "Handles a client-streaming RPC, a stream of request messages in, one response message out.",
             "params": [
-              { "type": { "name": "stream<anydata, Error?>" }, "presence": "required" }
+              {
+                "name": "clientStream",
+                "doc": "The inbound request messages, consumed as a stream.",
+                "type": { "name": "stream<anydata, Error?>" },
+                "presence": "required"
+              }
             ],
             "returns": [{ "name": "anydata" }, { "name": "error" }]
           },
           {
             "name": "bidiStreaming",
             "kind": "remote",
+            "doc": "Handles a bidirectional-streaming RPC, request and response messages flow independently in both directions.",
             "params": [
-              { "type": { "name": "stream<anydata, Error?>" }, "presence": "required" }
+              {
+                "name": "clientStream",
+                "doc": "The inbound request messages, consumed as a stream.",
+                "type": { "name": "stream<anydata, Error?>" },
+                "presence": "required"
+              }
             ],
             "returns": { "name": "()" }
           }
         ]
-      }
+      },
+      "annotations": ["$serviceConfig"]
     }
   ],
 
   "annotations": [
-    {
-      "id": "serviceConfig",
-      "type": { "name": "ServiceConfig" },
-      "attachPoint": "service",
-      "appliesTo": ["service"],
-      "presence": "optional"
-    }
-  ],
-
-  "dataBindingRules": []
+    { "id": "$serviceConfig", "type": { "name": "ServiceConfig" }, "attachPoint": "service", "presence": "optional" }
+  ]
 }

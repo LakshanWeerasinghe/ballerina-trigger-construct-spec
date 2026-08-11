@@ -1,26 +1,22 @@
 {
-  "version": "v1",
+  "version": "v1.0",
 
   "listeners": [
     {
       "type": { "name": "Listener" },
-      "services": ["service"]
+      "services": ["$service"],
+      "multipleServicesAllowed": true,
+      "multipleServicesOfSameTypeAllowed": true
     }
   ],
 
   "serviceTypes": [
     {
-      "id": "service",
+      "id": "$service",
       "type": { "name": "Service" },
       "concrete": false,
       "multipleListenersAllowed": true,
-      "multipleServicesPerListenerAllowed": true,
-
-      "identifier": {
-        "presence": "required",
-        "form": ["basePath"]
-      },
-
+      "identifier": { "presence": "required", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
         "addMode": "many",
@@ -28,62 +24,44 @@
           {
             "name": "*",
             "kind": "resource",
+            "doc": "One resource method per GraphQL query field. The field name is the resource path, and the return type becomes that field's type in the generated schema.",
             "accessor": { "presence": "required", "values": ["get"] },
             "fieldName": { "presence": "required", "form": ["identifierSegment"] },
             "graphqlOperation": "query",
-            "params": [
-              { "type": { "name": "anydata" }, "presence": "optional", "annotations": ["id"] }
-            ],
-            "returns": [{ "name": "anydata" }, { "name": "error" }]
+            "params": [{ "type": { "name": "anydata" }, "presence": "optional", "addMode": "many", "annotations": ["$id"] }],
+            "returns": [{ "name": "anydata" }, { "name": "error" }],
+            "annotations": ["$resourceConfig"]
           },
           {
             "name": "*",
             "kind": "remote",
+            "doc": "One remote method per GraphQL mutation field. Remote methods are exposed as mutations; resource methods are queries.",
             "fieldName": { "presence": "required", "form": ["identifierSegment"] },
             "graphqlOperation": "mutation",
-            "params": [
-              { "type": { "name": "anydata" }, "presence": "optional", "annotations": ["id"] }
-            ],
-            "returns": [{ "name": "anydata" }, { "name": "error" }]
+            "params": [{ "type": { "name": "anydata" }, "presence": "optional", "addMode": "many", "annotations": ["$id"] }],
+            "returns": [{ "name": "anydata" }, { "name": "error" }],
+            "annotations": ["$resourceConfig"]
           },
           {
             "name": "*",
             "kind": "resource",
+            "doc": "One subscribe resource method per GraphQL subscription field. Each value emitted on the returned stream is delivered to subscribed clients as one update.",
             "accessor": { "presence": "required", "values": ["subscribe"] },
             "fieldName": { "presence": "required", "form": ["identifierSegment"] },
             "graphqlOperation": "subscription",
-            "params": [
-              { "type": { "name": "anydata" }, "presence": "optional", "annotations": ["id"] }
-            ],
-            "returns": { "name": "stream<anydata, error?>" }
+            "params": [{ "type": { "name": "anydata" }, "presence": "optional", "addMode": "many", "annotations": ["$id"] }],
+            "returns": { "name": "stream<anydata, error?>" },
+            "annotations": ["$resourceConfig"]
           }
         ]
-      }
+      },
+      "annotations": ["$serviceConfig"]
     }
   ],
 
   "annotations": [
-    {
-      "id": "serviceConfig",
-      "type": { "name": "ServiceConfig" },
-      "attachPoint": "service",
-      "appliesTo": ["service"],
-      "presence": "optional"
-    },
-    {
-      "id": "resourceConfig",
-      "type": { "name": "ResourceConfig" },
-      "attachPoint": "function",
-      "appliesTo": ["service"],
-      "presence": "optional"
-    },
-    {
-      "id": "id",
-      "type": { "name": "ID" },
-      "attachPoint": "parameter",
-      "presence": "optional"
-    }
-  ],
-
-  "dataBindingRules": []
+    { "id": "$serviceConfig", "type": { "name": "ServiceConfig" }, "attachPoint": "service", "presence": "optional" },
+    { "id": "$resourceConfig", "type": { "name": "ResourceConfig" }, "attachPoint": "function", "presence": "optional" },
+    { "id": "$id", "type": { "name": "ID" }, "attachPoint": "parameter", "presence": "optional" }
+  ]
 }
