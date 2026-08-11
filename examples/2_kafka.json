@@ -21,9 +21,18 @@
             "presence": "required",
             "params": [
               {
+                "name": "caller",
+                "doc": "Handle for committing offsets explicitly. Needed only when auto-commit is disabled.",
+                "type": { "name": "Caller" },
+                "presence": "optional"
+              },
+              {
                 "name": "records",
                 "doc": "The polled batch. Declare a narrower element type to project each record's value, see the consumerRecordPayload data-binding rule.",
-                "type": [{ "name": "AnydataConsumerRecord[]" }, { "name": "BytesConsumerRecord[]" }],
+                "type": [
+                  { "shape": "array", "elementType": { "name": "AnydataConsumerRecord" } },
+                  { "shape": "array", "elementType": { "name": "BytesConsumerRecord" } }
+                ],
                 "presence": "required",
                 "dataBinding": {
                   "typedescs": [
@@ -45,12 +54,6 @@
                     }
                   ]
                 }
-              },
-              {
-                "name": "caller",
-                "doc": "Handle for committing offsets explicitly. Needed only when auto-commit is disabled.",
-                "type": { "name": "Caller" },
-                "presence": "optional"
               }
             ],
             "returns": [{ "name": "error" }, { "name": "()" }]

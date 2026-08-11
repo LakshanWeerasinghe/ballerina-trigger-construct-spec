@@ -16,6 +16,7 @@
       "type": { "name": "Service" },
       "concrete": false,
       "multipleListenersAllowed": true,
+      "annotations": ["$serviceConfig"],
       "identifier": { "presence": "optional", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
@@ -122,26 +123,34 @@
                 "name": "content",
                 "doc": "The parsed rows, see the csvContent data-binding rule for the batched and streamed forms.",
                 "type": [
-                  { "name": "string[][]" },
-                  { "name": "record {}[]" },
-                  { "name": "stream<string[], error?>" },
-                  { "name": "stream<record {}, error?>" }
+                  { "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string" } } },
+                  { "shape": "array", "elementType": { "name": "record {}" } },
+                  {
+                    "shape": "stream",
+                    "elementType": { "shape": "array", "elementType": { "name": "string" } },
+                    "completionType": [{ "name": "error" }, { "name": "()" }]
+                  },
+                  {
+                    "shape": "stream",
+                    "elementType": { "name": "record {}" },
+                    "completionType": [{ "name": "error" }, { "name": "()" }]
+                  }
                 ],
                 "presence": "required",
                 "dataBinding": {
                   "typedescs": [
                     {
-                      "constraint": { "name": "string[]" },
+                      "constraint": { "shape": "array", "elementType": { "name": "string" } },
                       "shapes": [
                         { "form": "array", "element": "bare" },
-                        { "form": "stream", "element": "bare", "completionType": { "name": "error?" } }
+                        { "form": "stream", "element": "bare", "completionType": [{ "name": "error" }, { "name": "()" }] }
                       ]
                     },
                     {
                       "constraint": { "name": "record {}" },
                       "shapes": [
                         { "form": "array", "element": "bare" },
-                        { "form": "stream", "element": "bare", "completionType": { "name": "error?" } }
+                        { "form": "stream", "element": "bare", "completionType": [{ "name": "error" }, { "name": "()" }] }
                       ]
                     }
                   ]
@@ -172,7 +181,14 @@
               {
                 "name": "content",
                 "doc": "The file's bytes. Declare the stream form to read large files in chunks rather than loading them into memory.",
-                "type": [{ "name": "byte[]" }, { "name": "stream<byte[], error?>" }],
+                "type": [
+                  { "shape": "array", "elementType": { "name": "byte" } },
+                  {
+                    "shape": "stream",
+                    "elementType": { "shape": "array", "elementType": { "name": "byte" } },
+                    "completionType": [{ "name": "error" }, { "name": "()" }]
+                  }
+                ],
                 "presence": "required"
               },
               {
@@ -254,8 +270,8 @@
           "rule": "structure.exactlyOne",
           "message": "An SMB service needs its watched path from exactly one source: @smb:ServiceConfig { path } or the service identifier.",
           "subjects": [
-            { "role": "fromAnnotation", "kind": "annotationField", "annotation": "$serviceConfig", "path": ["path"] },
-            { "role": "fromIdentifier", "kind": "identifier" }
+            { "kind": "annotationField", "annotation": "$serviceConfig", "path": ["path"], "role": "fromAnnotation" },
+            { "kind": "identifier", "role": "fromIdentifier" }
           ],
           "prefer": "fromAnnotation"
         }

@@ -61,7 +61,15 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "stream<anydata, Error?>" }, { "name": "error" }, { "name": "()" }]
+            "returns": [
+              {
+                "shape": "stream",
+                "elementType": { "name": "anydata" },
+                "completionType": [{ "name": "Error" }, { "name": "()" }]
+              },
+              { "name": "error" },
+              { "name": "()" }
+            ]
           },
           {
             "name": "*",
@@ -78,7 +86,11 @@
               {
                 "name": "clientStream",
                 "doc": "The inbound request messages, consumed as a stream.",
-                "type": { "name": "stream<anydata, Error?>" },
+                "type": {
+                  "shape": "stream",
+                  "elementType": { "name": "anydata" },
+                  "completionType": [{ "name": "Error" }, { "name": "()" }]
+                },
                 "presence": "required"
               }
             ],
@@ -99,11 +111,23 @@
               {
                 "name": "clientStream",
                 "doc": "The inbound request messages, consumed as a stream.",
-                "type": { "name": "stream<anydata, Error?>" },
+                "type": {
+                  "shape": "stream",
+                  "elementType": { "name": "anydata" },
+                  "completionType": [{ "name": "Error" }, { "name": "()" }]
+                },
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "stream<anydata, Error?>" }, { "name": "error" }, { "name": "()" }]
+            "returns": [
+              {
+                "shape": "stream",
+                "elementType": { "name": "anydata" },
+                "completionType": [{ "name": "Error" }, { "name": "()" }]
+              },
+              { "name": "error" },
+              { "name": "()" }
+            ]
           }
         ]
       }

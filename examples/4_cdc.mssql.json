@@ -4,14 +4,14 @@
   "listeners": [
     {
       "type": { "name": "CdcListener" },
+      "services": ["$service"],
+      "multipleServicesAllowed": true,
       "requiredImports": [
         {
           "importType": "driver",
           "packageInfo": { "org": "ballerinax", "packageName": "mssql.cdc.driver", "moduleName": "mssql.cdc.driver", "version": "1.0.2" }
         }
-      ],
-      "services": ["$service"],
-      "multipleServicesAllowed": true
+      ]
     }
   ],
 
@@ -21,6 +21,7 @@
       "type": { "name": "Service", "packageInfo": { "org": "ballerinax", "packageName": "cdc", "moduleName": "cdc", "version": "1.3.2" } },
       "concrete": false,
       "multipleListenersAllowed": true,
+      "annotations": ["$serviceConfig"],
       "handlers": {
         "backedByConcreteType": false,
         "options": [
@@ -151,8 +152,7 @@
             { "kind": "handler", "name": "onDelete" }
           ]
         }
-      ],
-      "annotations": ["$serviceConfig"]
+      ]
     }
   ],
 

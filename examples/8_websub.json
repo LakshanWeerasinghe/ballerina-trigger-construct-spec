@@ -16,6 +16,7 @@
       "type": { "name": "SubscriberService" },
       "concrete": false,
       "multipleListenersAllowed": true,
+      "annotations": ["$subscriberServiceConfig"],
       "identifier": { "presence": "optional", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
@@ -89,8 +90,7 @@
             "returns": [{ "name": "Acknowledgement" }, { "name": "()" }]
           }
         ]
-      },
-      "annotations": ["$subscriberServiceConfig"]
+      }
     }
   ],
 

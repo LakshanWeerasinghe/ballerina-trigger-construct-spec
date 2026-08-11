@@ -13,12 +13,7 @@
       "type": "string",
       "pattern": "^v[0-9]+\\.[0-9]+$"
     },
-    "listeners": {
-      "description": "Listener entry points.",
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/listener" }
-    },
+    "listeners": { "description": "Listener entry points.", "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/listener" } },
     "serviceTypes": {
       "description": "Service type alternatives this connector exposes.",
       "type": "array",
@@ -45,13 +40,8 @@
       "type": "string",
       "pattern": "^\\$[A-Za-z][A-Za-z0-9_]*$"
     },
-    "idList": {
-      "type": "array",
-      "minItems": 1,
-      "items": { "$ref": "#/$defs/id" }
-    },
+    "idList": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
     "presence": { "enum": ["required", "optional"] },
-
     "packageInfo": {
       "description": "The package a cross module type comes from.",
       "type": "object",
@@ -65,24 +55,50 @@
       }
     },
     "typeRef": {
-      "description": "A type reference. packageInfo is present only for a cross module type.",
-      "type": "object",
-      "required": ["name"],
-      "additionalProperties": false,
-      "properties": {
-        "name": { "type": "string", "minLength": 1 },
-        "packageInfo": { "$ref": "#/$defs/packageInfo" }
-      }
+      "description": "A type reference. Either a plain name, or a constructed type given by shape plus the parts that shape is built from. Every type inside a composite is itself a typeRef and can carry its own packageInfo.",
+      "oneOf": [
+        {
+          "title": "named",
+          "type": "object",
+          "required": ["name"],
+          "additionalProperties": false,
+          "properties": {
+            "name": {
+              "description": "Unqualified. It belongs to the module this file describes unless packageInfo is set. Composite types use shape, so a name never embeds [], <> or a trailing ?. Only () and record {} are non identifier names.",
+              "type": "string",
+              "pattern": "^(\\(\\)|record \\{\\}|[A-Za-z_][A-Za-z0-9_]*)$"
+            },
+            "packageInfo": { "$ref": "#/$defs/packageInfo" }
+          }
+        },
+        {
+          "title": "array",
+          "description": "An array terminates with nothing, so it has no completionType.",
+          "type": "object",
+          "required": ["shape", "elementType"],
+          "additionalProperties": false,
+          "properties": {
+            "shape": { "const": "array" },
+            "elementType": { "description": "The element type.", "$ref": "#/$defs/typeRefOrUnion" }
+          }
+        },
+        {
+          "title": "stream",
+          "type": "object",
+          "required": ["shape", "elementType"],
+          "additionalProperties": false,
+          "properties": {
+            "shape": { "const": "stream" },
+            "elementType": { "description": "The value type.", "$ref": "#/$defs/typeRefOrUnion" },
+            "completionType": { "description": "Optional. What the stream terminates with.", "$ref": "#/$defs/typeRefOrUnion" }
+          }
+        }
+      ]
     },
     "typeRefOrUnion": {
       "description": "One type, or a union written as an array with the codegen default first.",
-      "oneOf": [
-        { "$ref": "#/$defs/typeRef" },
-        { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/typeRef" } }
-      ]
+      "oneOf": [{ "$ref": "#/$defs/typeRef" }, { "type": "array", "minItems": 2, "items": { "$ref": "#/$defs/typeRef" } }]
     },
-
-
     "listener": {
       "type": "object",
       "required": ["type", "services", "multipleServicesAllowed"],
@@ -100,20 +116,12 @@
         "type": { "$ref": "#/$defs/typeRef" },
         "deprecated": {
           "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
-          "type": "string", "minLength": 1
+          "type": "string",
+          "minLength": 1
         },
-        "services": {
-          "description": "serviceTypes ids this listener can host.",
-          "$ref": "#/$defs/idList"
-        },
-        "multipleServicesAllowed": {
-          "description": "Can one instance of this listener host more than one service at all?",
-          "type": "boolean"
-        },
-        "multipleServicesOfSameTypeAllowed": {
-          "description": "Can two of those services be of the same service type? Absent means unconstrained.",
-          "type": "boolean"
-        },
+        "services": { "description": "serviceTypes ids this listener can host.", "$ref": "#/$defs/idList" },
+        "multipleServicesAllowed": { "description": "Can one instance of this listener host more than one service at all?", "type": "boolean" },
+        "multipleServicesOfSameTypeAllowed": { "description": "Can two of those services be of the same service type? Absent means unconstrained.", "type": "boolean" },
         "requiredImports": {
           "description": "Side effect only imports, never referenced by name.",
           "type": "array",
@@ -132,10 +140,7 @@
       "type": "object",
       "required": ["importType", "packageInfo"],
       "additionalProperties": false,
-      "properties": {
-        "importType": { "enum": ["driver"] },
-        "packageInfo": { "$ref": "#/$defs/packageInfo" }
-      }
+      "properties": { "importType": { "enum": ["driver"] }, "packageInfo": { "$ref": "#/$defs/packageInfo" } }
     },
     "platformDependency": {
       "description": "A jar the build must put on the classpath. No path here, that is the user's own copy.",
@@ -164,22 +169,15 @@
       "type": "object",
       "required": ["note"],
       "additionalProperties": false,
-      "properties": {
-        "url": { "type": "string", "format": "uri" },
-        "note": { "type": "string", "minLength": 1 }
-      }
+      "properties": { "url": { "type": "string", "format": "uri" }, "note": { "type": "string", "minLength": 1 } }
     },
     "nativeLibrary": {
       "description": "Where to put it is determined by os, so it is not repeated here.",
       "type": "object",
       "required": ["os", "file"],
       "additionalProperties": false,
-      "properties": {
-        "os": { "enum": ["linux", "windows", "macos"] },
-        "file": { "type": "string", "minLength": 1 }
-      }
+      "properties": { "os": { "enum": ["linux", "windows", "macos"] }, "file": { "type": "string", "minLength": 1 } }
     },
-
     "serviceType": {
       "type": "object",
       "required": ["id", "type", "concrete", "multipleListenersAllowed", "handlers"],
@@ -189,24 +187,15 @@
         "type": { "$ref": "#/$defs/typeRef" },
         "deprecated": {
           "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
-          "type": "string", "minLength": 1
+          "type": "string",
+          "minLength": 1
         },
-        "annotations": {
-          "description": "Annotation ids with attachPoint service.",
-          "$ref": "#/$defs/idList"
-        },
-        "concrete": {
-          "description": "true when the type declares its own methods and they can be introspected.",
-          "type": "boolean"
-        },
+        "concrete": { "description": "true when the type declares its own methods and they can be introspected.", "type": "boolean" },
         "multipleListenersAllowed": { "type": "boolean" },
+        "annotations": { "description": "Annotation ids with attachPoint service.", "$ref": "#/$defs/idList" },
         "identifier": { "$ref": "#/$defs/identifierSpec" },
         "handlers": { "$ref": "#/$defs/handlers" },
-        "rules": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "$ref": "#/$defs/rule" }
-        }
+        "rules": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/rule" } }
       }
     },
     "identifierSpec": {
@@ -216,52 +205,33 @@
       "additionalProperties": false,
       "properties": {
         "presence": { "$ref": "#/$defs/presence" },
-        "form": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "enum": ["basePath", "stringLiteral"] }
-        }
+        "form": { "type": "array", "minItems": 1, "items": { "enum": ["basePath", "stringLiteral"] } }
       }
     },
-
     "handlers": {
       "type": "object",
       "required": ["backedByConcreteType"],
       "additionalProperties": false,
       "properties": {
-        "backedByConcreteType": {
-          "description": "true means the type's own methods are the handlers, so nothing more is said here.",
-          "type": "boolean"
-        },
-        "options": {
-          "type": "array",
-          "minItems": 1,
-          "items": { "$ref": "#/$defs/handlerOption" }
-        }
+        "backedByConcreteType": { "description": "true means the type's own methods are the handlers, so nothing more is said here.", "type": "boolean" },
+        "options": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/handlerOption" } }
       },
       "allOf": [
         {
           "if": { "properties": { "backedByConcreteType": { "const": true } }, "required": ["backedByConcreteType"] },
-          "then": {
-            "description": "A concrete backed type omits options.",
-            "not": { "required": ["options"] }
-          },
+          "then": { "description": "A concrete backed type omits options.", "not": { "required": ["options"] } },
           "else": { "required": ["options"] }
         }
       ]
     },
-
     "handlerOption": {
       "type": "object",
-      "required": ["name", "kind"],
+      "required": ["name", "kind", "doc"],
       "additionalProperties": false,
       "allOf": [
         {
           "if": { "properties": { "kind": { "const": "resource" } }, "required": ["kind"] },
-          "then": {
-            "description": "A resource function is identified by its accessor and path.",
-            "required": ["accessor", "path"]
-          },
+          "then": { "description": "A resource function is identified by its accessor and path.", "required": ["accessor", "path"] },
           "else": {
             "description": "A remote function has neither.",
             "not": { "anyOf": [{ "required": ["accessor"] }, { "required": ["path"] }] }
@@ -277,34 +247,25 @@
         }
       ],
       "properties": {
-        "name": {
-          "description": "The handler method name, or * for an open handler.",
-          "type": "string",
-          "minLength": 1
-        },
+        "name": { "description": "The handler method name, or * for an open handler.", "type": "string", "minLength": 1 },
         "kind": { "enum": ["remote", "resource"] },
         "addMode": {
           "description": "subset, the default when absent, is one fixed method name governed by presence. many is a shape the user instantiates repeatedly under names of their own choosing.",
           "enum": ["subset", "many"]
         },
         "doc": {
-          "description": "What this handler is for and when it fires. Required, because a non concrete handler has no doc comment to introspect.",
+          "description": "What this handler is for and when it fires. Required: options only exist under a non concrete type, so there is no doc comment to introspect.",
           "type": "string",
           "minLength": 1
         },
         "deprecated": {
           "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
-          "type": "string", "minLength": 1
+          "type": "string",
+          "minLength": 1
         },
         "presence": { "$ref": "#/$defs/presence" },
-        "annotations": {
-          "description": "Annotation ids with attachPoint function.",
-          "$ref": "#/$defs/idList"
-        },
-        "returnAnnotations": {
-          "description": "Annotation ids with attachPoint return.",
-          "$ref": "#/$defs/idList"
-        },
+        "annotations": { "description": "Annotation ids with attachPoint function.", "$ref": "#/$defs/idList" },
+        "returnAnnotations": { "description": "Annotation ids with attachPoint return.", "$ref": "#/$defs/idList" },
         "params": {
           "description": "Order is meaningful. A param that must come first is listed first.",
           "type": "array",
@@ -316,10 +277,7 @@
           "description": "Resource kind only. The accessor in resource function <accessor> <path>().",
           "$ref": "#/$defs/valueSpec"
         },
-        "path": {
-          "description": "Resource kind only. The path in resource function <accessor> <path>().",
-          "$ref": "#/$defs/valueSpec"
-        }
+        "path": { "description": "Resource kind only. The path in resource function <accessor> <path>().", "$ref": "#/$defs/valueSpec" }
       }
     },
     "valueSpec": {
@@ -331,45 +289,37 @@
         "presence": { "$ref": "#/$defs/presence" },
         "values": {
           "description": "Legal literal values. A single * means any value the language accepts.",
-          "type": "array", "minItems": 1, "items": { "type": "string" }
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
         }
       }
     },
-
     "param": {
       "type": "object",
-      "required": ["type", "presence"],
+      "required": ["type", "presence", "doc"],
       "additionalProperties": false,
       "properties": {
-        "name": {
-          "description": "The parameter name to emit.",
+        "name": { "description": "The parameter name to emit.", "type": "string", "minLength": 1 },
+        "doc": {
+          "description": "What this parameter carries. Required for the same reason as a handler's doc. On a many slot it describes what one occurrence is.",
           "type": "string",
           "minLength": 1
         },
-        "doc": { "type": "string", "minLength": 1 },
         "deprecated": {
           "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
-          "type": "string", "minLength": 1
+          "type": "string",
+          "minLength": 1
         },
         "type": { "$ref": "#/$defs/typeRefOrUnion" },
         "presence": { "$ref": "#/$defs/presence" },
-        "addMode": {
-          "description": "many means the slot repeats, with the user naming each occurrence.",
-          "enum": ["many"]
-        },
+        "addMode": { "description": "many means the slot repeats, with the user naming each occurrence.", "enum": ["many"] },
         "dataBinding": { "$ref": "#/$defs/dataBinding" },
-        "annotations": {
-          "description": "Annotation ids with attachPoint parameter.",
-          "$ref": "#/$defs/idList"
-        }
+        "annotations": { "description": "Annotation ids with attachPoint parameter.", "$ref": "#/$defs/idList" }
       },
       "if": { "not": { "properties": { "addMode": { "const": "many" } }, "required": ["addMode"] } },
-      "then": {
-        "description": "A fixed slot must carry its name, otherwise each generator invents one.",
-        "required": ["name"]
-      }
+      "then": { "description": "A fixed slot must carry its name, otherwise each generator invents one.", "required": ["name"] }
     },
-
     "annotation": {
       "description": "attachPoint decides which construct field holds the reference to this id.",
       "type": "object",
@@ -382,7 +332,6 @@
         "presence": { "$ref": "#/$defs/presence" }
       }
     },
-
     "rule": {
       "description": "A named constraint from an open registry. An unknown rule id is skipped, not failed.",
       "type": "object",
@@ -397,15 +346,8 @@
         },
         "subjects": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/subject" } },
         "severity": { "enum": ["error", "warning"], "default": "error" },
-        "message": {
-          "description": "Diagnostic text for a consumer to surface.",
-          "type": "string",
-          "minLength": 1
-        },
-        "prefer": {
-          "description": "Role a generator should default to. A hint, not part of the constraint.",
-          "type": "string"
-        }
+        "message": { "description": "Diagnostic text for a consumer to surface.", "type": "string", "minLength": 1 },
+        "prefer": { "description": "Role a generator should default to. A hint, not part of the constraint.", "type": "string" }
       }
     },
     "subject": {
@@ -415,11 +357,7 @@
           "type": "object",
           "required": ["kind"],
           "additionalProperties": false,
-          "properties": {
-            "kind": { "const": "identifier" },
-            "serviceType": { "$ref": "#/$defs/id" },
-            "role": { "type": "string" }
-          }
+          "properties": { "kind": { "const": "identifier" }, "serviceType": { "$ref": "#/$defs/id" }, "role": { "type": "string" } }
         },
         {
           "type": "object",
@@ -474,25 +412,19 @@
         }
       ]
     },
-
     "dataBinding": {
       "description": "Written inline on the param it belongs to. A set of independent typedesc variants that share nothing.",
       "type": "object",
       "required": ["typedescs"],
       "additionalProperties": false,
-      "properties": {
-        "typedescs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/typedescVariant" } }
-      }
+      "properties": { "typedescs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/typedescVariant" } } }
     },
     "typedescVariant": {
       "type": "object",
       "required": ["constraint", "shapes"],
       "additionalProperties": false,
       "properties": {
-        "constraint": {
-          "description": "This variant's typedesc upper bound. One type, never a union.",
-          "$ref": "#/$defs/typeRef"
-        },
+        "constraint": { "description": "This variant's typedesc upper bound. One type, never a union.", "$ref": "#/$defs/typeRef" },
         "excludes": {
           "description": "Instantiations another variant already owns, so each declared type maps to one variant.",
           "type": "array",
@@ -512,10 +444,7 @@
           "description": "bare is T alone, array is T[], stream is a stream of T, included splices T into a field of an envelope record.",
           "enum": ["bare", "array", "stream", "included"]
         },
-        "element": {
-          "description": "For array and stream, whether each element is bare or included.",
-          "enum": ["bare", "included"]
-        },
+        "element": { "description": "For array and stream, whether each element is bare or included.", "enum": ["bare", "included"] },
         "envelope": { "$ref": "#/$defs/typeRef" },
         "bindableFields": {
           "description": "Fields of the envelope bound to this variant's typedesc. Every other field stays fixed.",
@@ -523,7 +452,7 @@
           "minItems": 1,
           "items": { "type": "string", "minLength": 1 }
         },
-        "completionType": { "$ref": "#/$defs/typeRef" }
+        "completionType": { "description": "A union with () when nilable.", "$ref": "#/$defs/typeRefOrUnion" }
       },
       "allOf": [
         {

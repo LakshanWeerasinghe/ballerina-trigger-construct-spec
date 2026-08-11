@@ -16,6 +16,7 @@
       "type": { "name": "Service" },
       "concrete": false,
       "multipleListenersAllowed": true,
+      "annotations": ["$serviceConfig"],
       "identifier": { "presence": "required", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
@@ -27,6 +28,8 @@
             "doc": "One resource method per HTTP endpoint. The accessor is the HTTP verb and the resource path is the URL path, both are written into the method signature rather than configured here.",
             "accessor": { "presence": "required", "values": ["get", "post", "put", "delete", "patch", "head", "options", "default"] },
             "path": { "presence": "required" },
+            "annotations": ["$resourceConfig"],
+            "returnAnnotations": ["$cache"],
             "params": [
               {
                 "name": "caller",
@@ -56,25 +59,24 @@
                 "annotations": ["$payload"]
               },
               {
+                "doc": "One URL query parameter. Repeat the slot once per parameter the resource accepts; the user names each one and the name becomes the query key.",
                 "type": [{ "name": "string" }, { "name": "int" }, { "name": "boolean" }, { "name": "decimal" }, { "name": "float" }],
                 "presence": "optional",
                 "addMode": "many",
                 "annotations": ["$query"]
               },
               {
+                "doc": "One request header. Repeat the slot once per header the resource reads; the user names each one, and the Header annotation carries the header name when it differs from the parameter name.",
                 "type": [{ "name": "string" }, { "name": "int" }, { "name": "boolean" }, { "name": "decimal" }, { "name": "float" }],
                 "presence": "optional",
                 "addMode": "many",
                 "annotations": ["$header"]
               }
             ],
-            "returns": [{ "name": "anydata" }, { "name": "Response" }, { "name": "error" }],
-            "annotations": ["$resourceConfig"],
-            "returnAnnotations": ["$cache"]
+            "returns": [{ "name": "anydata" }, { "name": "Response" }, { "name": "error" }]
           }
         ]
-      },
-      "annotations": ["$serviceConfig"]
+      }
     }
   ],
 

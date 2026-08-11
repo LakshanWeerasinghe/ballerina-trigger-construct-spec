@@ -3,9 +3,7 @@
 
   "listeners": [
     {
-      "type": {
-        "name": "Listener"
-      },
+      "type": { "name": "Listener" },
       "services": ["$idocService", "$rfcService"],
       "multipleServicesAllowed": true,
       "multipleServicesOfSameTypeAllowed": false,
@@ -42,10 +40,7 @@
   "serviceTypes": [
     {
       "id": "$idocService",
-      "type": {
-        "name": "IDocService",
-        "packageInfo": { "org": "ballerinax", "packageName": "sap.jco", "moduleName": "sap.jco", "version": "2.0.0" }
-      },
+      "type": { "name": "IDocService" },
       "concrete": false,
       "multipleListenersAllowed": true,
       "handlers": {
@@ -79,10 +74,7 @@
     },
     {
       "id": "$rfcService",
-      "type": {
-        "name": "RfcService",
-        "packageInfo": { "org": "ballerinax", "packageName": "sap.jco", "moduleName": "sap.jco", "version": "2.0.0" }
-      },
+      "type": { "name": "RfcService" },
       "concrete": false,
       "multipleListenersAllowed": true,
       "handlers": {
@@ -103,22 +95,11 @@
               {
                 "name": "parameters",
                 "doc": "Import and table parameters supplied by SAP for this call.",
-                "type": {
-                  "name": "RfcParameters",
-                  "packageInfo": { "org": "ballerinax", "packageName": "sap.jco", "moduleName": "sap.jco", "version": "2.0.0" }
-                },
+                "type": { "name": "RfcParameters" },
                 "presence": "required"
               }
             ],
-            "returns": [
-              {
-                "name": "RfcRecord",
-                "packageInfo": { "org": "ballerinax", "packageName": "sap.jco", "moduleName": "sap.jco", "version": "2.0.0" }
-              },
-              { "name": "xml" },
-              { "name": "error" },
-              { "name": "()" }
-            ]
+            "returns": [{ "name": "RfcRecord" }, { "name": "xml" }, { "name": "error" }, { "name": "()" }]
           },
           {
             "name": "onError",

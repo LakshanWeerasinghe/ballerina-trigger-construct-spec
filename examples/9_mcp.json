@@ -16,6 +16,7 @@
       "type": { "name": "Service" },
       "concrete": false,
       "multipleListenersAllowed": true,
+      "annotations": ["$serviceConfig"],
       "identifier": { "presence": "optional", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
@@ -33,28 +34,33 @@
                 "type": { "name": "Session" },
                 "presence": "optional"
               },
-              { "type": { "name": "anydata" }, "presence": "optional", "addMode": "many" }
+              {
+                "doc": "One tool argument. Repeat the slot once per argument the tool accepts; the user names each one and the names and types become the tool's input schema.",
+                "type": { "name": "anydata" },
+                "presence": "optional",
+                "addMode": "many"
+              }
             ],
             "returns": [{ "name": "anydata" }, { "name": "error" }]
           }
         ]
-      },
-      "annotations": ["$serviceConfig"]
+      }
     },
     {
       "id": "$advancedService",
       "type": { "name": "AdvancedService" },
       "concrete": true,
       "multipleListenersAllowed": true,
+      "annotations": ["$serviceConfig"],
       "identifier": { "presence": "optional", "form": ["basePath"] },
-      "handlers": { "backedByConcreteType": true },
-      "annotations": ["$serviceConfig"]
+      "handlers": { "backedByConcreteType": true }
     },
     {
       "id": "$streamableHttpService",
       "type": { "name": "StreamableHttpService" },
       "concrete": false,
       "multipleListenersAllowed": true,
+      "annotations": ["$streamableHttpServiceConfig"],
       "identifier": { "presence": "optional", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
@@ -72,8 +78,14 @@
                 "type": { "name": "Session" },
                 "presence": "optional"
               },
-              { "type": { "name": "anydata" }, "presence": "optional", "addMode": "many" },
               {
+                "doc": "One tool argument. Repeat the slot once per argument the tool accepts; the user names each one and the names and types become the tool's input schema.",
+                "type": { "name": "anydata" },
+                "presence": "optional",
+                "addMode": "many"
+              },
+              {
+                "doc": "One HTTP request header. Repeat the slot once per header the tool reads; the user names each one.",
                 "type": [{ "name": "string" }, { "name": "int" }, { "name": "boolean" }, { "name": "decimal" }, { "name": "float" }],
                 "presence": "optional",
                 "addMode": "many",
@@ -101,14 +113,14 @@
             "returns": [{ "name": "anydata" }, { "name": "error" }]
           }
         ]
-      },
-      "annotations": ["$streamableHttpServiceConfig"]
+      }
     },
     {
       "id": "$streamableHttpAdvancedService",
       "type": { "name": "StreamableHttpAdvancedService" },
       "concrete": false,
       "multipleListenersAllowed": true,
+      "annotations": ["$streamableHttpServiceConfig"],
       "identifier": { "presence": "optional", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
@@ -120,6 +132,7 @@
             "presence": "required",
             "params": [
               {
+                "doc": "One HTTP request header. Repeat the slot once per header the tool reads; the user names each one.",
                 "type": [{ "name": "string" }, { "name": "int" }, { "name": "boolean" }, { "name": "decimal" }, { "name": "float" }],
                 "presence": "optional",
                 "addMode": "many",
@@ -165,6 +178,7 @@
                 "presence": "optional"
               },
               {
+                "doc": "One HTTP request header. Repeat the slot once per header the tool reads; the user names each one.",
                 "type": [{ "name": "string" }, { "name": "int" }, { "name": "boolean" }, { "name": "decimal" }, { "name": "float" }],
                 "presence": "optional",
                 "addMode": "many",
@@ -192,8 +206,7 @@
             "returns": [{ "name": "CallToolResult" }, { "name": "ServerError" }]
           }
         ]
-      },
-      "annotations": ["$streamableHttpServiceConfig"]
+      }
     }
   ],
 

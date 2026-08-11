@@ -19,14 +19,30 @@ public type TriggerModel record {|
     Rule[] rules?;
 |};
 
-# A reference to a Ballerina type, optionally qualified with cross-module package info.
+# A reference to a Ballerina type. Either a plain `name`, or a constructed type given by `shape`
+# plus the parts that shape is built from. A composite type is therefore a tree, and every type
+# inside it is itself a `TypeRef` that can carry its own `packageInfo`.
 #
-# + name - The type name. Same module as this file's own primary construct unless `packageInfo` is set
-# + packageInfo - Present only when `name` comes from a different module
+# + name - A named type, unqualified. It belongs to the module this file describes unless
+#          `packageInfo` is set. `()` is nil, and `record {}` is an open record; both are atomic
+# + packageInfo - Only alongside `name`, and only when the type is not from the module this file
+#                 describes
+# + shape - How a constructed type is built. Which parts apply follows from it, see spec.md
+#           section 1.1
+# + elementType - The type the shape holds: the element of an `array`, the value of a `stream`
+# + completionType - `stream` only, and optional: the type the stream terminates with
 public type TypeRef record {|
-    string name;
+    string name?;
     PackageInfo packageInfo?;
+    TypeShape shape?;
+    TypeRefOrUnion elementType?;
+    TypeRefOrUnion completionType?;
 |};
+
+# How a constructed type is built. Closed, unlike the rule registry: an unrecognised shape cannot be
+# skipped the way an unrecognised rule can, because the type could not be written at all. Growing
+# it is additive, see spec.md section 11.1.
+public type TypeShape "array"|"stream";
 
 # Coordinates identifying the package/module a cross-module type reference comes from.
 #
@@ -144,9 +160,9 @@ public type ServiceType record {|
     string id;
     TypeRef 'type;
     string deprecated?;
-    string[] annotations?;
     boolean concrete;
     boolean multipleListenersAllowed;
+    string[] annotations?;
     IdentifierSpec identifier?;
     Handlers handlers;
     Rule[] rules?;
@@ -202,8 +218,8 @@ public type ValueSpec record {|
 # + addMode - `subset` (default when absent) means this is one fixed method name the user either
 #             declares or does not, governed by `presence`. `many` means this is a shape the user
 #             instantiates any number of times under names of their own choosing
-# + doc - What this handler is for and when it fires. A handler described here has no concrete
-#         type behind it, so there is no doc comment to introspect
+# + doc - What this handler is for and when it fires. Required: `options` only exists under a
+#         non-concrete type, so there is never a doc comment to introspect
 # + deprecated - Why this handler is deprecated, as prose for a human. A generator emitting
 #                Ballerina puts it in the `# # Deprecated` doc section
 # + presence - Only meaningful under `addMode: "subset"`, a `many` shape has no fixed occurrence
@@ -219,7 +235,7 @@ public type HandlerOption record {|
     string name;
     HandlerKind kind;
     AddMode addMode?;
-    string doc?;
+    string doc;
     string deprecated?;
     Presence presence?;
     string[] annotations?;
@@ -235,7 +251,8 @@ public type HandlerOption record {|
 # + name - The parameter name to emit. Required on every fixed slot, since codegen renders the
 #          parameter from this entry alone. Omitted only when `addMode` is `"many"`, where the
 #          user names each occurrence
-# + doc - What this parameter carries. Same reason as `HandlerOption.doc`
+# + doc - What this parameter carries. Required for the same reason as `HandlerOption.doc`. On a
+#         `many` slot it describes what one occurrence is
 # + deprecated - Why this parameter is deprecated, as prose for a human
 # + 'type - `TypeRef` or a union; restates the full static surface even where `dataBinding` also implies it
 # + presence - `required` or `optional` for this slot
@@ -245,7 +262,7 @@ public type HandlerOption record {|
 # + annotations - Ids into `annotations[]`, `attachPoint: "parameter"`
 public type Param record {|
     string name?;
-    string doc?;
+    string doc;
     string deprecated?;
     TypeRefOrUnion 'type;
     Presence presence;
@@ -382,7 +399,7 @@ public type Shape record {|
     "bare"|"included" element?;
     TypeRef envelope?;
     string[] bindableFields?;
-    TypeRef completionType?;
+    TypeRefOrUnion completionType?;
 |};
 
 # One independent `typedesc<T>`-bound variant within a `DataBinding`. Variants never share a

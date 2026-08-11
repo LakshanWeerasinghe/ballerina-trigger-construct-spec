@@ -48,30 +48,81 @@ Handler names, parameter names, and `role` labels are not ids and are never pref
 
 ## 1. `TypeRef`
 
-Every type reference uses one shape:
+A type reference is a **tree**, never a type expression in a string. A node is either a plain
+`name`, or a constructed type given by `shape` plus the parts that shape is built from.
 
 ```json
 { "name": "Caller" }
+{ "shape": "array", "elementType": { "name": "byte" } }
 ```
 
-Add `packageInfo` only when the type is not from this file's home module, which is the module the
-listener belongs to:
+| Field | Meaning |
+|---|---|
+| `name` | A named type. Mutually exclusive with `shape`. |
+| `packageInfo` | Only alongside `name`, and only for a type from another module. |
+| `shape` | How a constructed type is built. Section 1.1. |
+| `elementType` | The type the shape holds. |
+| `completionType` | `stream` only, and optional. |
+
+A `name` is unqualified and belongs to the module this file describes. A consumer already knows
+which module that is from wherever it obtained the file, so it is not restated here. `()` is nil and
+`record {}` is an open record; both are atomic names.
+
+**Unions** are an array of `TypeRef`, first element being the codegen default. **Nilable** `T?` is an
+explicit `()` union member rather than a flag, so a union is also how a nilable part appears:
 
 ```json
-{ "name": "Header", "packageInfo": { "org": "ballerina", "packageName": "http", "moduleName": "http", "version": "2.16.5" } }
-```
-
-A union is an array of `TypeRef`, first element being the codegen default:
-
-```json
-"type": [{ "name": "AnydataConsumerRecord[]" }, { "name": "BytesConsumerRecord[]" }]
-```
-
-A nilable type `T?` is written as an explicit `()` union member, not a separate flag:
-
-```json
+"type": [{ "name": "AnydataConsumerRecord" }, { "name": "BytesConsumerRecord" }]
 "returns": [{ "name": "error" }, { "name": "()" }]
 ```
+
+### 1.1 Shapes
+
+| `shape` | `elementType` | `completionType` | Ballerina |
+|---|---|---|---|
+| `array` | the element | not applicable, an array terminates with nothing | `T[]` |
+| `stream` | the value | optional, what the stream terminates with | `stream<T>`, `stream<T, C>` |
+
+```json
+{ "shape": "array", "elementType": { "name": "byte" } }
+{ "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string" } } }
+{ "shape": "stream", "elementType": { "name": "anydata" }, "completionType": [{ "name": "Error" }, { "name": "()" }] }
+```
+
+which are `byte[]`, `string[][]`, and `stream<anydata, Error?>`.
+
+**Why a discriminator rather than a key per kind.** A field named `arrayOf` or `streamOf` makes
+every new composite kind a new field, so `map<T>` could not be expressed without changing this
+schema. With `shape` naming the kind, a new kind is a new `shape` value and a row in the table
+above, reusing `elementType` where it fits and adding a part only where the kind genuinely has one.
+Under section 11.1 that is additive.
+
+`shape` is closed, unlike the rule registry in section 6.2. An unrecognised rule can be skipped and
+the rest of the manifest still used; an unrecognised type shape cannot, because the type could not
+be written at all, so it should fail loudly rather than silently.
+
+**Why a tree at all.** Every type inside a composite is itself a `TypeRef`, so it can carry its own
+`packageInfo` and be qualified independently. As a string, `"stream<anydata, Error?>"` gave a
+consumer nothing to attach a module to: the `Error` was invisible, and qualifying whole names
+produced `grpc:stream<anydata, Error?>` or left `Error` bare, neither of which resolves.
+
+### 1.2 Qualifying a name for output
+
+Names carry no module prefix, because the prefix depends on the alias the reader's file chose for
+its import. A consumer emitting Ballerina adds it: the alias for the described module on an
+unqualified leaf, and `packageInfo.moduleName` on a cross module one. With the tree this is a
+decision per leaf rather than string surgery:
+
+| `TypeRef` | Renders as, when the described module is `grpc` |
+|---|---|
+| `{ "name": "Caller" }` | `grpc:Caller` |
+| `{ "name": "anydata" }` | `anydata`, a language type, never qualified |
+| `{ "streamOf": {"name":"anydata"}, "completion": [{"name":"Error"},{"name":"()"}] }` | `stream<anydata, grpc:Error?>` |
+| `{ "streamOf": {"arrayOf":{"name":"string"}}, "completion": [{"name":"error"},{"name":"()"}] }` | `stream<string[], error?>` |
+
+Whether a leaf is a language type or a module type follows from the language's own set of builtin
+names, so it is not restated here. Case is a reliable signal in practice: `Error` is the module's
+error subtype, `error` is the language's.
 
 ---
 
@@ -266,7 +317,7 @@ block, so it lives on each option as `addMode`. Section 5.1.
 | `name` | Under `subset`, the method name to emit. Under `many`, always `"*"`, since the user names each instance. |
 | `kind` | `"remote"` or `"resource"`. |
 | `addMode` | `subset` (default when absent) or `many`. Section 5.1. |
-| `doc` | What this handler is for and when it fires. Section 5.2. |
+| `doc` | **Required.** What this handler is for and when it fires. Section 5.2. |
 | `deprecated` | Optional. Section 5.3. |
 | `presence` | Only under `addMode: "subset"`. A `many` shape has no fixed occurrence count to require. |
 | `annotations` | Ids of annotations with `attachPoint: "function"`. |
@@ -327,10 +378,15 @@ described in `options[]` has no such method, so there is no doc comment to read.
 
 | `backedByConcreteType` | `doc` |
 |---|---|
-| `true` | Omit. Introspect the method. |
-| `false` | Author it. It is the only description a generator or agent will see. |
+| `true` | There are no `options`, so the question does not arise. Introspect the methods. |
+| `false` | Required. It is the only description a generator or agent will see. |
 
-The same applies to `params[].doc`.
+Because `options` exists only when `backedByConcreteType` is `false`, every handler written here is
+non concrete by construction. So `doc` is simply required, with no condition attached, and the same
+holds for `params[].doc`.
+
+On a `many` slot the doc describes what one occurrence is, which is the only place that gets said:
+an HTTP `*` handler has two `many` params distinguished otherwise only by their annotation.
 
 ### 5.3 `deprecated`
 
@@ -477,7 +533,7 @@ Asymmetric constraints use `role` instead of positional members:
 | Field | Meaning |
 |---|---|
 | `name` | The parameter name to emit. Required on every fixed slot, omitted only when `addMode` is `"many"`. |
-| `doc` | What this parameter carries. Same non concrete rule as section 5.2. |
+| `doc` | **Required.** What this parameter carries. Section 5.2. |
 | `deprecated` | Optional. Section 5.3. |
 | `type` | `TypeRef` or a union. States the full static surface for this slot even where `dataBinding` also implies it. |
 | `presence` | `required` or `optional`. |

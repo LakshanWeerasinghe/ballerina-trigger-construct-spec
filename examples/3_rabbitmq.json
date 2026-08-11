@@ -16,6 +16,7 @@
       "type": { "name": "Service" },
       "concrete": false,
       "multipleListenersAllowed": true,
+      "annotations": ["$serviceConfig"],
       "identifier": { "presence": "optional", "form": ["stringLiteral"] },
       "handlers": {
         "backedByConcreteType": false,
@@ -119,8 +120,8 @@
           "rule": "structure.exactlyOne",
           "message": "A RabbitMQ consumer needs its queue name from exactly one source: @rabbitmq:ServiceConfig { queueName } or the service identifier.",
           "subjects": [
-            { "role": "fromAnnotation", "kind": "annotationField", "annotation": "$serviceConfig", "path": ["queueName"] },
-            { "role": "fromIdentifier", "kind": "identifier" }
+            { "kind": "annotationField", "annotation": "$serviceConfig", "path": ["queueName"], "role": "fromAnnotation" },
+            { "kind": "identifier", "role": "fromIdentifier" }
           ],
           "prefer": "fromAnnotation"
         },

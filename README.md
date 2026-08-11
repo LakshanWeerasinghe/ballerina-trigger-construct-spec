@@ -144,6 +144,8 @@ An instance is considered correct when it is:
 
 - **Well formed.** Validates against `spec.json`.
 - **Referentially consistent.** Every referenced listener, service, and annotation id resolves.
+  Every declared annotation is attached from a construct matching its `attachPoint`; being read by
+  a rule does not count as being attached.
 - **Constraint satisfiable.** Presence rules and every `rules[]` entry are jointly satisfiable.
 
 Compilation of generated code is explicitly **not** the acceptance test at this fidelity level.
