@@ -51,7 +51,6 @@
       "multipleListenersAllowed": true,
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "onReceive",
@@ -89,7 +88,6 @@
       "multipleListenersAllowed": true,
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "onCall",

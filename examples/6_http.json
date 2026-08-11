@@ -19,14 +19,14 @@
       "identifier": { "presence": "required", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "many",
         "options": [
           {
             "name": "*",
             "kind": "resource",
+            "addMode": "many",
             "doc": "One resource method per HTTP endpoint. The accessor is the HTTP verb and the resource path is the URL path, both are written into the method signature rather than configured here.",
-            "method": { "presence": "required", "values": ["get", "post", "put", "delete", "patch", "head", "options", "default"] },
-            "path": { "presence": "required", "form": ["identifierSegments", "pathParamSegments", "stringLiteralSegment"] },
+            "accessor": { "presence": "required", "values": ["get", "post", "put", "delete", "patch", "head", "options", "default"] },
+            "path": { "presence": "required" },
             "params": [
               {
                 "name": "caller",

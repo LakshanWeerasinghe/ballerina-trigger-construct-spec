@@ -92,6 +92,7 @@ A nilable type `T?` is written as an explicit `()` union member, not a separate 
 | Field | Meaning |
 |---|---|
 | `type` | `TypeRef` for the listener class. |
+| `deprecated` | Optional. Section 5.3. |
 | `services` | `serviceTypes[].id` values this listener can host. |
 | `multipleServicesAllowed` | Can one instance of this listener host more than one service at all? |
 | `multipleServicesOfSameTypeAllowed` | Can two of those services be of the same service type? Omitted when `multipleServicesAllowed` is `false`. Absent means unconstrained. |
@@ -172,7 +173,7 @@ knows the Java version of the distribution it targets.
 | `type` | `TypeRef` for the service object type. |
 | `concrete` | `true` when the type declares its own methods and they can be introspected. `false` for a marker or abstract type. |
 | `multipleListenersAllowed` | Can one service attach to more than one listener at once, as in `service X on l1, l2 {}`? |
-| `deprecated` | Optional. Section 5.2. |
+| `deprecated` | Optional. Section 5.3. |
 | `annotations` | Ids of annotations with `attachPoint: "service"`. Section 8. |
 | `identifier` | Omit entirely when the identifier slot carries no meaning. `form` values: `basePath`, `stringLiteral`. |
 | `handlers` | Section 4. |
@@ -183,6 +184,12 @@ and the choice comes from whatever supplied the generation intent.
 
 When a connector really does require at least one of several handlers, that is a `rules[]` entry,
 not a `presence` marker. See `structure.atLeastOne` in section 6.2.
+
+**Error handlers never count.** A service whose only handler is `onError` receives nothing and does
+nothing, so every service type must require at least one handler that actually processes input.
+Where one processing handler is always mandatory, `presence: "required"` on that handler says it.
+Where any one of several will do, a `structure.atLeastOne` rule over the processing handlers says
+it, with the error handler left out of the subjects.
 
 ### 3.1 Attachment cardinality
 
@@ -221,10 +228,10 @@ service at most already rules it out.
 ## 4. `handlers`
 
 ```json
-"handlers": { "backedByConcreteType": false, "addMode": "subset", "options": [ ] }
+"handlers": { "backedByConcreteType": false, "options": [ ] }
 ```
 
-A concrete backed type says nothing further. Both `addMode` and `options` are omitted:
+A concrete backed type says nothing further, so `options` is omitted too:
 
 ```json
 "handlers": { "backedByConcreteType": true }
@@ -233,8 +240,10 @@ A concrete backed type says nothing further. Both `addMode` and `options` are om
 | Field | Meaning |
 |---|---|
 | `backedByConcreteType` | `true` means the type's own methods are the handlers, so introspection already answers everything this file could say. `false` means `options` is the only source of truth. |
-| `addMode` | Only when `backedByConcreteType` is `false`. `"subset"` is a fixed set of names, each with its own `presence`. `"many"` is open ended and user named, written as one option named `"*"`. |
 | `options` | Only when `backedByConcreteType` is `false`. Section 5. |
+
+Whether a handler is a fixed name or a repeatable shape is a property of that handler, not of the
+block, so it lives on each option as `addMode`. Section 5.1.
 
 ---
 
@@ -254,19 +263,62 @@ A concrete backed type says nothing further. Both `addMode` and `options` are om
 
 | Field | Meaning |
 |---|---|
-| `name` | Handler method name, or `"*"` for an open handler. |
+| `name` | Under `subset`, the method name to emit. Under `many`, always `"*"`, since the user names each instance. |
 | `kind` | `"remote"` or `"resource"`. |
-| `doc` | What this handler is for and when it fires. Section 5.1. |
-| `deprecated` | Optional. Section 5.2. |
-| `presence` | Only under `addMode: "subset"`. |
+| `addMode` | `subset` (default when absent) or `many`. Section 5.1. |
+| `doc` | What this handler is for and when it fires. Section 5.2. |
+| `deprecated` | Optional. Section 5.3. |
+| `presence` | Only under `addMode: "subset"`. A `many` shape has no fixed occurrence count to require. |
 | `annotations` | Ids of annotations with `attachPoint: "function"`. |
 | `returnAnnotations` | Ids of annotations with `attachPoint: "return"`. |
 | `returns` | `TypeRef` or a union. |
 
-Resource kind extras: HTTP adds `method` and `path`; GraphQL adds `accessor`, `fieldName`, and
-`graphqlOperation`. Each is a `{ presence, values }` or `{ presence, form }` object.
+A `resource` handler is identified by its accessor and path, matching the language form
+`resource function <accessor> <path>()`. Both are required for `kind: "resource"` and neither
+applies to `kind: "remote"`.
 
-### 5.1 `doc`
+| Field | Shape | Meaning |
+|---|---|---|
+| `accessor` | `{ presence, values }` | The legal accessors. HTTP puts its verbs here, GraphQL puts `get` or `subscribe`. |
+| `path` | `{ presence }` | Whether a path is required. No syntactic form is recorded, since the language already fixes what a resource path may look like. |
+
+`values` is a fixed set, or a single `"*"` meaning any accessor the language accepts:
+
+```json
+"accessor": { "presence": "required", "values": ["get", "post", "put", "delete"] }
+"accessor": { "presence": "required", "values": ["*"] }
+```
+
+These two fields are deliberately library neutral. HTTP calls its accessor a method and GraphQL
+calls its path a field name, but both are the same two positions in the same language construct,
+so the schema names them once. GraphQL's operation kind is not recorded either, since it follows
+from what is already there: a query is `resource` with accessor `get`, a subscription is `resource`
+with accessor `subscribe`, and a mutation is `remote`.
+
+### 5.1 `addMode`
+
+`addMode` says whether an option is one fixed method or a shape the user repeats.
+
+| Value | Meaning | `name` is | `presence` |
+|---|---|---|---|
+| `subset` (default) | One fixed method name. The user declares it or does not. | The method name to emit. | Applies. |
+| `many` | A shape the user instantiates any number of times under names of their own choosing. | Always `"*"`. | Does not apply. |
+
+It sits on the option rather than on `handlers` because the two can coexist. A service type may
+offer fixed lifecycle handlers alongside open user named ones, and a block level flag cannot say
+that.
+
+A `many` option is always named `"*"`. The user picks the real name, so there is none to record.
+
+```json
+{ "name": "*", "kind": "remote", "addMode": "many" }
+```
+
+One service type may carry several `"*"` options when it offers several distinct shapes. gRPC has
+four, one per RPC kind, and GraphQL has three, one per operation. They are told apart by their
+params, returns, and `doc`, not by their name.
+
+### 5.2 `doc`
 
 Everywhere else the rule is: if introspection recovers it, leave it out. Docs invert that, but only
 for the non concrete case, and for the same reason. A handler backed by a concrete type has a real
@@ -280,23 +332,39 @@ described in `options[]` has no such method, so there is no doc comment to read.
 
 The same applies to `params[].doc`.
 
-### 5.2 `deprecated`
+### 5.3 `deprecated`
 
-Attaches to `serviceTypes[]`, `handlers.options[]`, and `params[]`, the three constructs a library
-can retire while still accepting.
+A string saying why. Attaches to `listeners[]`, `serviceTypes[]`, `handlers.options[]`, and
+`params[]`, the four constructs a library can retire while still accepting.
 
 ```json
-"deprecated": { "reason": "Superseded by the typed content handlers.", "since": "2.4.0", "replacement": "onFileJson" }
+"deprecated": "Superseded by the typed content handlers, which deliver the file body already bound to a declared type."
 ```
 
-| Field | Meaning |
-|---|---|
-| `reason` | Required. A deprecation with no reason gives a generator nothing to relay. |
-| `since` | Optional. Package version the deprecation took effect. |
-| `replacement` | Optional. What to use instead. |
+Presence of the field is the deprecation; the value is the explanation. There is no `since` or
+`replacement`, since the reason can name a version or a successor in the sentence itself if either
+matters.
 
-The mechanism has to exist before the first deprecation, since one that waits for a schema revision
-cannot be announced on time. No corpus instance yet.
+**The reason is written to be read.** A generator emitting Ballerina puts it in the construct's
+`# # Deprecated` doc section, beside the `@deprecated` annotation, which is where the language
+expects the explanation to live:
+
+```ballerina
+# Invoked once per poll with the files added and deleted since the previous poll.
+#
+# # Deprecated
+# Superseded by the typed content handlers, which deliver the file body already bound to a
+# declared type.
+@deprecated
+remote function onFileChange(ftp:WatchEvent event) returns error? {
+}
+```
+
+So write it as a sentence a user should see. It is separate from `doc`: `doc` says what the
+construct does, `deprecated` says why not to use it.
+
+A deprecated handler still counts for `structure.atLeastOne`. It remains legal, just not
+recommended, so a service satisfying the rule with only a deprecated handler is valid.
 
 ---
 
@@ -411,8 +479,8 @@ Asymmetric constraints use `role` instead of positional members:
 | Field | Meaning |
 |---|---|
 | `name` | The parameter name to emit. Required on every fixed slot, omitted only when `addMode` is `"many"`. |
-| `doc` | What this parameter carries. Same non concrete rule as section 5.1. |
-| `deprecated` | Optional. Section 5.2. |
+| `doc` | What this parameter carries. Same non concrete rule as section 5.2. |
+| `deprecated` | Optional. Section 5.3. |
 | `type` | `TypeRef` or a union. States the full static surface for this slot even where `dataBinding` also implies it. |
 | `presence` | `required` or `optional`. |
 | `addMode` | Optional `"many"`. The slot repeats, each occurrence independently named and typed, as with HTTP query params, GraphQL field arguments, and MCP tool arguments. |
@@ -546,7 +614,7 @@ the envelope's fields minus `bindableFields`.
 | Concept | Values |
 |---|---|
 | `serviceTypes[].identifier.form` | `basePath`, `stringLiteral` |
-| `handlers.addMode` | `subset`, `many` |
+| `handlers.options[].addMode` | `subset` (default), `many` |
 | `handlers.options[].kind` | `remote`, `resource` |
 | `handlers.options[].presence` | `required`, `optional` |
 | `params[].addMode` | `many` |

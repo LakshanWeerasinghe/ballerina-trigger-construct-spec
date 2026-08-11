@@ -19,15 +19,14 @@
       "identifier": { "presence": "required", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "get",
             "kind": "resource",
             "doc": "Handles the initial HTTP request and decides whether to upgrade it to a WebSocket connection. Return the service that will handle the resulting connection, or an error to reject the upgrade.",
             "presence": "required",
-            "method": { "presence": "required", "values": ["get"] },
-            "path": { "presence": "required", "form": ["stringLiteralSegment"] },
+            "accessor": { "presence": "required", "values": ["get"] },
+            "path": { "presence": "required" },
             "params": [
               {
                 "name": "request",
@@ -51,7 +50,6 @@
       "multipleListenersAllowed": true,
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "onOpen",
@@ -230,6 +228,21 @@
         ]
       },
       "rules": [
+        {
+          "id": "$atLeastOneHandler",
+          "rule": "structure.atLeastOne",
+          "message": "A WebSocket service must declare at least one handler other than onError. onError alone never receives a message or a lifecycle event.",
+          "subjects": [
+            { "kind": "handler", "name": "onOpen" },
+            { "kind": "handler", "name": "onMessage" },
+            { "kind": "handler", "name": "onTextMessage" },
+            { "kind": "handler", "name": "onBinaryMessage" },
+            { "kind": "handler", "name": "onPing" },
+            { "kind": "handler", "name": "onPong" },
+            { "kind": "handler", "name": "onIdleTimeout" },
+            { "kind": "handler", "name": "onClose" }
+          ]
+        },
         {
           "id": "$textMessageVsGeneric",
           "rule": "structure.atMostOne",

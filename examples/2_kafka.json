@@ -13,7 +13,6 @@
       "multipleListenersAllowed": false,
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "onConsumerRecord",

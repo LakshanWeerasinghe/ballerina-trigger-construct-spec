@@ -50,6 +50,8 @@ public type Presence "required"|"optional";
 # A listener entry point.
 #
 # + 'type - `TypeRef` for the listener class
+# + deprecated - Why this listener is deprecated. Present only when the library still accepts it
+#                but no longer recommends it
 # + services - `ServiceType.id` values this listener can host
 # + multipleServicesAllowed - Can one instance of this listener host more than one service at all?
 # + multipleServicesOfSameTypeAllowed - Can two of those services be of the same `ServiceType`?
@@ -60,6 +62,7 @@ public type Presence "required"|"optional";
 #                          Ballerina `import`
 public type Listener record {|
     TypeRef 'type;
+    string deprecated?;
     string[] services;
     boolean multipleServicesAllowed;
     boolean multipleServicesOfSameTypeAllowed?;
@@ -131,7 +134,7 @@ public type NativeLibrary record {|
 # + 'type - `TypeRef` for the service object type
 # + concrete - `true` if the type declares its own methods directly (introspectable); `false` for marker/abstract types
 # + multipleListenersAllowed - Can one service instance attach to more than one listener at once?
-# + deprecated - Present only when the library still accepts this service type but no longer recommends it
+# + deprecated - Why this service type is deprecated, as prose for a human
 # + annotations - Ids into `TriggerModel.annotations`, `attachPoint: "service"`, the annotations
 #                 attachable to a service of this type
 # + identifier - Omitted entirely when the identifier slot carries no meaning for this service type
@@ -140,7 +143,7 @@ public type NativeLibrary record {|
 public type ServiceType record {|
     string id;
     TypeRef 'type;
-    Deprecation deprecated?;
+    string deprecated?;
     string[] annotations?;
     boolean concrete;
     boolean multipleListenersAllowed;
@@ -160,81 +163,71 @@ public type IdentifierSpec record {|
     IdentifierForm[] form;
 |};
 
-# How many of `HandlerOption`s can/must be implemented at once.
-public type AddMode "many"|"subset";
+# Whether a `HandlerOption` is one fixed method name, or a shape the user instantiates repeatedly
+# under names of their own choosing.
+public type AddMode "subset"|"many";
 
 # The handler-shape block for a service type.
 #
-# + backedByConcreteType - `true` means the type's own declared methods are the handlers, and both
-#                          `addMode` and `options` are omitted, there is nothing this file could
-#                          say that introspecting the type would not already answer
-# + addMode - Omitted when `backedByConcreteType` is `true`
+# + backedByConcreteType - `true` means the type's own declared methods are the handlers, and
+#                          `options` is omitted, there is nothing this file could say that
+#                          introspecting the type would not already answer
 # + options - The only source of truth for handler shapes when `backedByConcreteType` is `false`;
 #             omitted entirely when it is `true`
 public type Handlers record {|
     boolean backedByConcreteType;
-    AddMode addMode?;
     HandlerOption[] options?;
 |};
 
 public type HandlerKind "remote"|"resource";
 
-# Marks a construct the library still accepts but no longer recommends.
+# A constraint on one part of a resource handler's signature.
 #
-# + reason - Why it is deprecated. Required, since a deprecation with no reason gives a generator
-#            nothing to relay
-# + since - Package version the deprecation took effect, when known
-# + replacement - What to use instead
-public type Deprecation record {|
-    string reason;
-    string since?;
-    string replacement?;
-|};
-
-# A `{presence, values|form}` constraint used by resource-kind handler extras
-# (HTTP's `method`/`path`, GraphQL's `accessor`/`fieldName`).
+# No syntactic form is recorded. What a resource path may look like is fixed by the Ballerina
+# language, so restating it per connector would only repeat the language spec.
 #
-# + presence - Whether this extra is required or optional
-# + values - The legal literal values, when this extra is an enum-like choice
-# + form - The legal syntactic forms, when this extra describes a shape rather than a fixed value
+# + presence - Whether this part is required or optional
+# + values - The legal literal values, when this part is an enum-like choice. A single `"*"` means
+#            any value the language accepts, rather than a fixed set
 public type ValueSpec record {|
     Presence presence;
     string[] values?;
-    string[] form?;
 |};
 
 # One legal handler shape.
 #
-# + name - Handler method name, or `"*"` for an open/many-shaped handler
+# + name - Under `subset`, the method name to emit. Under `many`, always `"*"`, since the user
+#          names each instance
 # + kind - `remote` or `resource`
+# + addMode - `subset` (default when absent) means this is one fixed method name the user either
+#             declares or does not, governed by `presence`. `many` means this is a shape the user
+#             instantiates any number of times under names of their own choosing
 # + doc - What this handler is for and when it fires. A handler described here has no concrete
 #         type behind it, so there is no doc comment to introspect
-# + deprecated - Present only when the library still accepts this handler but no longer recommends it
-# + presence - Only meaningful under `addMode: "subset"`
+# + deprecated - Why this handler is deprecated, as prose for a human. A generator emitting
+#                Ballerina puts it in the `# # Deprecated` doc section
+# + presence - Only meaningful under `addMode: "subset"`, a `many` shape has no fixed occurrence
+#              count to require
 # + annotations - Ids into the top-level `annotations[]`, `attachPoint: "function"`
 # + returnAnnotations - Ids into the top-level `annotations[]`, `attachPoint: "return"`
 # + params - The handler's parameter list
 # + returns - `TypeRef` or a union
-# + method - Resource-kind extra (HTTP): legal HTTP verbs
-# + path - Resource-kind extra (HTTP): legal path-segment shapes
-# + accessor - Resource-kind extra (GraphQL): `get`/`subscribe`
-# + fieldName - Resource-kind extra (GraphQL): field-name shape
-# + graphqlOperation - Resource-kind extra (GraphQL): informational only
+# + accessor - Resource kind only. The accessor in `resource function <accessor> <path>()`. HTTP
+#              puts its verbs here, GraphQL puts `get` or `subscribe`
+# + path - Resource kind only. The path in `resource function <accessor> <path>()`
 public type HandlerOption record {|
     string name;
     HandlerKind kind;
+    AddMode addMode?;
     string doc?;
-    Deprecation deprecated?;
+    string deprecated?;
     Presence presence?;
     string[] annotations?;
     string[] returnAnnotations?;
     Param[] params?;
     TypeRefOrUnion 'returns?;
-    ValueSpec method?;
-    ValueSpec path?;
     ValueSpec accessor?;
-    ValueSpec fieldName?;
-    string graphqlOperation?;
+    ValueSpec path?;
 |};
 
 # One parameter of a handler option.
@@ -243,7 +236,7 @@ public type HandlerOption record {|
 #          parameter from this entry alone. Omitted only when `addMode` is `"many"`, where the
 #          user names each occurrence
 # + doc - What this parameter carries. Same reason as `HandlerOption.doc`
-# + deprecated - Present only when the library still accepts this parameter but no longer recommends it
+# + deprecated - Why this parameter is deprecated, as prose for a human
 # + 'type - `TypeRef` or a union; restates the full static surface even where `dataBinding` also implies it
 # + presence - `required` or `optional` for this slot
 # + addMode - `"many"` means this slot repeats zero or more times, each occurrence independently named/typed
@@ -253,7 +246,7 @@ public type HandlerOption record {|
 public type Param record {|
     string name?;
     string doc?;
-    Deprecation deprecated?;
+    string deprecated?;
     TypeRefOrUnion 'type;
     Presence presence;
     "many" addMode?;

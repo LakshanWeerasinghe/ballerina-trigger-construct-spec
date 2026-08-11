@@ -23,7 +23,6 @@
       "multipleListenersAllowed": true,
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "onRead",
@@ -140,6 +139,19 @@
           }
         ]
       },
+      "rules": [
+        {
+          "id": "$atLeastOneChangeHandler",
+          "rule": "structure.atLeastOne",
+          "message": "A CDC service must declare at least one change handler. onError alone never receives a change event, so the service would do nothing.",
+          "subjects": [
+            { "kind": "handler", "name": "onRead" },
+            { "kind": "handler", "name": "onCreate" },
+            { "kind": "handler", "name": "onUpdate" },
+            { "kind": "handler", "name": "onDelete" }
+          ]
+        }
+      ],
       "annotations": ["$serviceConfig"]
     }
   ],

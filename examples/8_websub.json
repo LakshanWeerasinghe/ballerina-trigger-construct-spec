@@ -19,7 +19,6 @@
       "identifier": { "presence": "optional", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "onEventNotification",

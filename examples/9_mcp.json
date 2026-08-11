@@ -19,11 +19,11 @@
       "identifier": { "presence": "optional", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "many",
         "options": [
           {
             "name": "*",
             "kind": "remote",
+            "addMode": "many",
             "doc": "One remote method per MCP tool. The method name becomes the tool name and its parameters become the tool's input schema, both discovered automatically, with no explicit registration.",
             "annotations": ["$tool"],
             "params": [
@@ -58,11 +58,11 @@
       "identifier": { "presence": "optional", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "many",
         "options": [
           {
             "name": "*",
             "kind": "remote",
+            "addMode": "many",
             "doc": "One remote method per MCP tool, served over the streamable HTTP transport. Tool name and input schema are discovered from the method signature.",
             "annotations": ["$tool"],
             "params": [
@@ -112,7 +112,6 @@
       "identifier": { "presence": "optional", "form": ["basePath"] },
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "onListTools",

@@ -82,17 +82,6 @@
       ]
     },
 
-    "deprecation": {
-      "description": "The library still accepts this construct but no longer recommends it.",
-      "type": "object",
-      "required": ["reason"],
-      "additionalProperties": false,
-      "properties": {
-        "reason": { "type": "string", "minLength": 1 },
-        "since": { "description": "Package version the deprecation took effect.", "type": "string" },
-        "replacement": { "description": "What to use instead.", "type": "string" }
-      }
-    },
 
     "listener": {
       "type": "object",
@@ -109,6 +98,10 @@
       ],
       "properties": {
         "type": { "$ref": "#/$defs/typeRef" },
+        "deprecated": {
+          "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
+          "type": "string", "minLength": 1
+        },
         "services": {
           "description": "serviceTypes ids this listener can host.",
           "$ref": "#/$defs/idList"
@@ -194,7 +187,10 @@
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "type": { "$ref": "#/$defs/typeRef" },
-        "deprecated": { "$ref": "#/$defs/deprecation" },
+        "deprecated": {
+          "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
+          "type": "string", "minLength": 1
+        },
         "annotations": {
           "description": "Annotation ids with attachPoint service.",
           "$ref": "#/$defs/idList"
@@ -237,10 +233,6 @@
           "description": "true means the type's own methods are the handlers, so nothing more is said here.",
           "type": "boolean"
         },
-        "addMode": {
-          "description": "subset is a fixed set of names. many is open ended and user named, written as one option named *.",
-          "enum": ["subset", "many"]
-        },
         "options": {
           "type": "array",
           "minItems": 1,
@@ -251,10 +243,10 @@
         {
           "if": { "properties": { "backedByConcreteType": { "const": true } }, "required": ["backedByConcreteType"] },
           "then": {
-            "description": "A concrete backed type omits addMode and options.",
-            "not": { "anyOf": [{ "required": ["options"] }, { "required": ["addMode"] }] }
+            "description": "A concrete backed type omits options.",
+            "not": { "required": ["options"] }
           },
-          "else": { "required": ["addMode", "options"] }
+          "else": { "required": ["options"] }
         }
       ]
     },
@@ -263,6 +255,27 @@
       "type": "object",
       "required": ["name", "kind"],
       "additionalProperties": false,
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "resource" } }, "required": ["kind"] },
+          "then": {
+            "description": "A resource function is identified by its accessor and path.",
+            "required": ["accessor", "path"]
+          },
+          "else": {
+            "description": "A remote function has neither.",
+            "not": { "anyOf": [{ "required": ["accessor"] }, { "required": ["path"] }] }
+          }
+        },
+        {
+          "if": { "properties": { "addMode": { "const": "many" } }, "required": ["addMode"] },
+          "then": {
+            "description": "The user names each instance, so the name is always * and presence does not apply.",
+            "properties": { "name": { "const": "*" } },
+            "not": { "required": ["presence"] }
+          }
+        }
+      ],
       "properties": {
         "name": {
           "description": "The handler method name, or * for an open handler.",
@@ -270,12 +283,19 @@
           "minLength": 1
         },
         "kind": { "enum": ["remote", "resource"] },
+        "addMode": {
+          "description": "subset, the default when absent, is one fixed method name governed by presence. many is a shape the user instantiates repeatedly under names of their own choosing.",
+          "enum": ["subset", "many"]
+        },
         "doc": {
           "description": "What this handler is for and when it fires. Required, because a non concrete handler has no doc comment to introspect.",
           "type": "string",
           "minLength": 1
         },
-        "deprecated": { "$ref": "#/$defs/deprecation" },
+        "deprecated": {
+          "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
+          "type": "string", "minLength": 1
+        },
         "presence": { "$ref": "#/$defs/presence" },
         "annotations": {
           "description": "Annotation ids with attachPoint function.",
@@ -292,25 +312,27 @@
           "items": { "$ref": "#/$defs/param" }
         },
         "returns": { "$ref": "#/$defs/typeRefOrUnion" },
-        "method": { "$ref": "#/$defs/valueSpec" },
-        "path": { "$ref": "#/$defs/valueSpec" },
-        "accessor": { "$ref": "#/$defs/valueSpec" },
-        "fieldName": { "$ref": "#/$defs/valueSpec" },
-        "graphqlOperation": {
-          "description": "Informational only.",
-          "enum": ["query", "mutation", "subscription"]
+        "accessor": {
+          "description": "Resource kind only. The accessor in resource function <accessor> <path>().",
+          "$ref": "#/$defs/valueSpec"
+        },
+        "path": {
+          "description": "Resource kind only. The path in resource function <accessor> <path>().",
+          "$ref": "#/$defs/valueSpec"
         }
       }
     },
     "valueSpec": {
-      "description": "A resource handler extra, such as an HTTP method or a GraphQL accessor.",
+      "description": "A constraint on one part of a resource handler's signature. No syntactic form is recorded, since the language already fixes what a resource path may look like.",
       "type": "object",
       "required": ["presence"],
       "additionalProperties": false,
       "properties": {
         "presence": { "$ref": "#/$defs/presence" },
-        "values": { "type": "array", "minItems": 1, "items": { "type": "string" } },
-        "form": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+        "values": {
+          "description": "Legal literal values. A single * means any value the language accepts.",
+          "type": "array", "minItems": 1, "items": { "type": "string" }
+        }
       }
     },
 
@@ -325,7 +347,10 @@
           "minLength": 1
         },
         "doc": { "type": "string", "minLength": 1 },
-        "deprecated": { "$ref": "#/$defs/deprecation" },
+        "deprecated": {
+          "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
+          "type": "string", "minLength": 1
+        },
         "type": { "$ref": "#/$defs/typeRefOrUnion" },
         "presence": { "$ref": "#/$defs/presence" },
         "addMode": {

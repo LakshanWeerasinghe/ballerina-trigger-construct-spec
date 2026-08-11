@@ -19,7 +19,6 @@
       "identifier": { "presence": "optional", "form": ["stringLiteral"] },
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "onMessage",

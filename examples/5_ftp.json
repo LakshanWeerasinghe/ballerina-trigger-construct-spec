@@ -13,7 +13,6 @@
       "multipleListenersAllowed": true,
       "handlers": {
         "backedByConcreteType": false,
-        "addMode": "subset",
         "options": [
           {
             "name": "onFileCsv",
@@ -208,7 +207,8 @@
           {
             "name": "onFileChange",
             "kind": "remote",
-            "doc": "Invoked once per poll with the complete set of files added and deleted since the previous poll. Use this for whole-poll bookkeeping; use the onFile* handlers to process content.",
+            "doc": "Invoked once per poll with the complete set of files added and deleted since the previous poll.",
+            "deprecated": "Superseded by the typed content handlers. onFileChange only reports which files changed, leaving the read and the parse to the handler, whereas onFileText, onFileJson, onFileXml, onFileCsv and onFile deliver the file body already bound to a declared type.",
             "presence": "optional",
             "annotations": ["$functionConfig"],
             "params": [
@@ -223,6 +223,21 @@
           }
         ]
       },
+      "rules": [
+        {
+          "id": "$atLeastOneFileHandler",
+          "rule": "structure.atLeastOne",
+          "message": "An FTP service must declare at least one file handler. onError alone never receives a file, so the service would do nothing.",
+          "subjects": [
+            { "kind": "handler", "name": "onFileCsv" },
+            { "kind": "handler", "name": "onFileJson" },
+            { "kind": "handler", "name": "onFileXml" },
+            { "kind": "handler", "name": "onFileText" },
+            { "kind": "handler", "name": "onFile" },
+            { "kind": "handler", "name": "onFileDelete" }
+          ]
+        }
+      ],
       "annotations": ["$serviceConfig"]
     }
   ],
