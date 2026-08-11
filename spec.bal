@@ -260,7 +260,7 @@ public type Param record {|
 #                 when the rule is nested; required in a top-level `TriggerModel.rules` entry
 # + role - This subject's name within its rule. Asymmetric constraints fix the legal names
 #          (e.g. `when`/`then`); symmetric ones use free-form labels, referenced by
-#          `Rule.prefer`/`Rule.reportOn`. Omit when the rule never needs to address it
+#          `Rule.prefer`. Omit when the rule never needs to address it
 public type SubjectBase record {|
     string serviceType?;
     string role?;
@@ -334,20 +334,15 @@ public type Severity "error"|"warning";
 # + rule - Registry id such as `structure.exactlyOne`. Open vocabulary, so an unknown id is
 #          skipped rather than failed
 # + subjects - What this constraint ranges over
-# + args - Constraint specific parameters. Unused by the corpus so far, present so a new
-#          parameterized check can ship without a schema revision
 # + severity - Defaults to `"error"`
-# + message - Diagnostic text, supporting `{placeholder}` interpolation from `args`. Recommended
-# + reportOn - `role` of the subject the diagnostic points at. Defaults to the service declaration
+# + message - Diagnostic text for a consumer to surface. Recommended
 # + prefer - `role` a generator should default to. A hint, never part of the constraint
 public type Rule record {|
     string id;
     string rule;
     Subject[] subjects;
-    map<anydata> args?;
     Severity severity?;
     string message?;
-    string reportOn?;
     string prefer?;
 |};
 

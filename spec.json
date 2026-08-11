@@ -396,16 +396,11 @@
           "pattern": "^[a-z][A-Za-z0-9]*(\\.[a-zA-Z][A-Za-z0-9]*)+$"
         },
         "subjects": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/subject" } },
-        "args": { "description": "Constraint specific parameters.", "type": "object" },
         "severity": { "enum": ["error", "warning"], "default": "error" },
         "message": {
-          "description": "Diagnostic text. Supports placeholder interpolation from args.",
+          "description": "Diagnostic text for a consumer to surface.",
           "type": "string",
           "minLength": 1
-        },
-        "reportOn": {
-          "description": "Role of the subject the diagnostic points at. Defaults to the service declaration.",
-          "type": "string"
         },
         "prefer": {
           "description": "Role a generator should default to. A hint, not part of the constraint.",

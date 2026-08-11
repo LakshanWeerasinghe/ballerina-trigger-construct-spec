@@ -371,7 +371,7 @@ recommended, so a service satisfying the rule with only a deprecated handler is 
 ## 6. `rules[]`
 
 A rule is referenced, never defined here. `rule` names a constraint from an open registry the
-consumer already implements, `subjects` say what it ranges over, and `args` parameterize it. Adding
+consumer already implements and `subjects` say what it ranges over. Adding
 a constraint is a new registry entry, not a schema change.
 
 ```json
@@ -392,10 +392,8 @@ a constraint is a new registry entry, not a schema change.
 | `id` | Stable and unique within the file. Surfaces in the emitted diagnostic. |
 | `rule` | Registry id. Open vocabulary, section 6.2. |
 | `subjects` | What the constraint ranges over. Section 6.1. |
-| `args` | Optional. Constraint specific parameters. |
 | `severity` | Optional. `error` (default) or `warning`. |
-| `message` | Optional but recommended. Supports `{placeholder}` interpolation from `args`. |
-| `reportOn` | Optional. `role` of the subject the diagnostic points at. Defaults to the service declaration. |
+| `message` | Optional but recommended. Text for a consumer to surface, worded for the connector rather than synthesised from the rule id. |
 | `prefer` | Optional. `role` a generator should default to. A hint, not part of the constraint. |
 
 **Placement.** A rule scoped to one service type lives on that `serviceTypes[]` entry. A rule
@@ -426,7 +424,7 @@ Every subject also accepts:
 | Field | Meaning |
 |---|---|
 | `serviceType` | Which service type this subject belongs to. Defaults to the enclosing one. Required in a top level rule. |
-| `role` | This subject's name within its rule. Asymmetric constraints fix the names such as `when` and `then`. Symmetric ones use free labels, referenced by `prefer` and `reportOn`. |
+| `role` | This subject's name within its rule. Asymmetric constraints fix the names such as `when` and `then`. Symmetric ones use free labels, referenced by `prefer`. |
 
 ### 6.2 Constraint registry
 
