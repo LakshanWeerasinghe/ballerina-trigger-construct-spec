@@ -4,14 +4,14 @@
   "listeners": [
     {
       "id": "$listener",
-      "doc": "Streams row change events captured from the configured database/tables and dispatches each to the attached service.",
+      "doc": "Streams row-level changes from the MySQL binary log and dispatches each captured event to the attached service.",
       "type": { "name": "CdcListener" },
       "services": ["$service"],
       "multipleServicesAllowed": true,
       "requiredImports": [
         {
           "importType": "driver",
-          "packageInfo": { "org": "ballerinax", "packageName": "mssql.cdc.driver", "moduleName": "mssql.cdc.driver", "version": "1.1.0" }
+          "packageInfo": { "org": "ballerinax", "packageName": "mysql.cdc.driver", "moduleName": "mysql.cdc.driver", "version": "1.1.0" }
         }
       ]
     }
@@ -20,7 +20,7 @@
   "serviceTypes": [
     {
       "id": "$service",
-      "doc": "Receives change data capture events for the configured tables: the initial snapshot rows, and subsequent inserts, updates, and deletes.",
+      "doc": "Consumes row-level change events captured from the subscribed MySQL tables and dispatches each event to the matching handler.",
       "type": { "name": "Service", "packageInfo": { "org": "ballerinax", "packageName": "cdc", "moduleName": "cdc", "version": "1.4.0" } },
       "concrete": false,
       "multipleListenersAllowed": true,

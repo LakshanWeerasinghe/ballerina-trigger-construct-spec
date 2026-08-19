@@ -4,7 +4,7 @@
 |---|---|
 | Spec version | v1.0 |
 | Author | Lakshan Weerasinghe (WSO2) |
-| Last revised | 2026-08-11 |
+| Last revised | 2026-08-19 |
 | Reviewed by | Not yet reviewed |
 
 Field reference for the JSON shape in `examples/*.json`. `spec.json` is the machine-checkable
@@ -27,8 +27,9 @@ Never an empty array, null, or default placeholder.
 
 ## 0. Ids
 
-Three constructs carry an id: `serviceTypes[]`, `annotations[]`, and `rules[]`. Every id starts
-with `$`, and so does every reference to one.
+Every construct that a file's own contents can point back into carries an id:
+`listeners[]`, `serviceTypes[]`, `handlers.options[]`, `params[]`, a handler's return type,
+`annotations[]`, and `rules[]`. Every id starts with `$`, and so does every reference to one.
 
 ```json
 "id": "$serviceConfig"
@@ -42,7 +43,26 @@ them. `"services": ["$service"]` is clearly a pointer into `serviceTypes[]`.
 Ids are scoped per construct kind and every reference site names the kind it targets, so `$` alone
 is enough. No per kind sigil.
 
-Handler names, parameter names, and `role` labels are not ids and are never prefixed.
+**Flat vs. hierarchical.** `listeners[]`, `annotations[]`, and `rules[]` are flat, top level lists,
+so their ids are single segments: `$serviceConfig`, `$listener`. A handler, its return type, and
+its params nest inside one `serviceTypes[]` entry, so their ids are hierarchical: dot separated
+segments that scope the id under its owner, built by appending the child's own name to the
+parent's id.
+
+```
+$service                    serviceTypes[] entry
+$service.onMessage          handlers.options[] entry on $service
+$service.onMessage.returns  the return type of $service.onMessage
+$service.onMessage.records  a param of $service.onMessage
+```
+
+A handler backed by a concrete type has no `options[]` entry to carry an id at all — its
+methods are introspectable by name, so there is nothing here to reference. Hierarchical ids
+therefore only ever appear under a non concrete service type.
+
+`role` labels (section 6.1) and the handler/param `name` fields are not ids and are never
+prefixed with `$` — `name` is what gets emitted as Ballerina source, `id` is only for
+cross-referencing within this file.
 
 ---
 
@@ -53,13 +73,15 @@ A type reference is a **tree**, never a type expression in a string. A node is e
 
 ```json
 { "name": "Caller" }
-{ "shape": "array", "elementType": { "name": "byte" } }
+{ "shape": "array", "elementType": { "name": "byte", "builtin": true } }
 ```
 
 | Field | Meaning |
 |---|---|
 | `name` | A named type. Mutually exclusive with `shape`. |
 | `packageInfo` | Only alongside `name`, and only for a type from another module. |
+| `builtin` | Only alongside `name`. `true` when `name` is one of Ballerina's own language types. Absent, never `false`, for a module type. Section 1.3. |
+| `subtypeFamily` | Only alongside `name`. `true` when this reference stands for the named type and every introspectable subtype of it, not the exact type alone. Meaningful inside `dataBinding`. Section 1.4. |
 | `shape` | How a constructed type is built. Section 1.1. |
 | `elementType` | The type the shape holds. |
 | `completionType` | `stream` only, and optional. |
@@ -73,7 +95,7 @@ explicit `()` union member rather than a flag, so a union is also how a nilable 
 
 ```json
 "type": [{ "name": "AnydataConsumerRecord" }, { "name": "BytesConsumerRecord" }]
-"returns": [{ "name": "error" }, { "name": "()" }]
+"returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
 ```
 
 ### 1.1 Shapes
@@ -82,29 +104,20 @@ explicit `()` union member rather than a flag, so a union is also how a nilable 
 |---|---|---|---|
 | `array` | the element | not applicable, an array terminates with nothing | `T[]` |
 | `stream` | the value | optional, what the stream terminates with | `stream<T>`, `stream<T, C>` |
+| `readonly` | the intersected type | not applicable, an intersection terminates with nothing | `readonly & T` |
 
 ```json
-{ "shape": "array", "elementType": { "name": "byte" } }
-{ "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string" } } }
-{ "shape": "stream", "elementType": { "name": "anydata" }, "completionType": [{ "name": "Error" }, { "name": "()" }] }
+{ "shape": "array", "elementType": { "name": "byte", "builtin": true } }
+{ "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string", "builtin": true } } }
+{ "shape": "stream", "elementType": { "name": "anydata", "builtin": true }, "completionType": [{ "name": "Error" }, { "name": "()", "builtin": true }] }
+{ "shape": "readonly", "elementType": { "shape": "array", "elementType": { "name": "byte", "builtin": true } } }
 ```
 
-which are `byte[]`, `string[][]`, and `stream<anydata, Error?>`.
-
-**Why a discriminator rather than a key per kind.** A field named `arrayOf` or `streamOf` makes
-every new composite kind a new field, so `map<T>` could not be expressed without changing this
-schema. With `shape` naming the kind, a new kind is a new `shape` value and a row in the table
-above, reusing `elementType` where it fits and adding a part only where the kind genuinely has one.
-Under section 11.1 that is additive.
+which are `byte[]`, `string[][]`, `stream<anydata, Error?>`, and `readonly & byte[]`.
 
 `shape` is closed, unlike the rule registry in section 6.2. An unrecognised rule can be skipped and
 the rest of the manifest still used; an unrecognised type shape cannot, because the type could not
 be written at all, so it should fail loudly rather than silently.
-
-**Why a tree at all.** Every type inside a composite is itself a `TypeRef`, so it can carry its own
-`packageInfo` and be qualified independently. As a string, `"stream<anydata, Error?>"` gave a
-consumer nothing to attach a module to: the `Error` was invisible, and qualifying whole names
-produced `grpc:stream<anydata, Error?>` or left `Error` bare, neither of which resolves.
 
 ### 1.2 Qualifying a name for output
 
@@ -116,13 +129,75 @@ decision per leaf rather than string surgery:
 | `TypeRef` | Renders as, when the described module is `grpc` |
 |---|---|
 | `{ "name": "Caller" }` | `grpc:Caller` |
-| `{ "name": "anydata" }` | `anydata`, a language type, never qualified |
-| `{ "streamOf": {"name":"anydata"}, "completion": [{"name":"Error"},{"name":"()"}] }` | `stream<anydata, grpc:Error?>` |
-| `{ "streamOf": {"arrayOf":{"name":"string"}}, "completion": [{"name":"error"},{"name":"()"}] }` | `stream<string[], error?>` |
+| `{ "name": "anydata", "builtin": true }` | `anydata`, a language type, never qualified |
+| `{ "shape": "stream", "elementType": {"name":"anydata","builtin":true}, "completionType": [{"name":"Error"},{"name":"()","builtin":true}] }` | `stream<anydata, grpc:Error?>` |
+| `{ "shape": "stream", "elementType": {"shape":"array","elementType":{"name":"string","builtin":true}}, "completionType": [{"name":"error","builtin":true},{"name":"()","builtin":true}] }` | `stream<string[], error?>` |
 
-Whether a leaf is a language type or a module type follows from the language's own set of builtin
-names, so it is not restated here. Case is a reliable signal in practice: `Error` is the module's
-error subtype, `error` is the language's.
+Whether a leaf is a language type or a module type decides how a consumer qualifies it, so it is a
+fact the consumer needs and `builtin` states it directly rather than leaving it to be inferred.
+Case is a reliable authoring convention in the corpus, `Error` is the module's error subtype and
+`error` is the language's, but a consumer should read `builtin` rather than pattern match on
+casing.
+
+### 1.3 `builtin`
+
+```json
+{ "name": "anydata", "builtin": true }
+{ "name": "error", "builtin": true }
+{ "name": "Error" }
+```
+
+`builtin` is `true` only on Ballerina's own language types: the basic types (`int`, `float`,
+`decimal`, `string`, `boolean`, `byte`), `anydata`, `any`, `error`, `()`, `record {}`, `json`,
+`xml`, `map`, `table`, and similarly. It is absent, never `false`, on every module type, following
+the same leave it out rule as everywhere else in this file. Unlike the rest of this file, `builtin`
+is stated for convenience rather than non-introspectability: hardcoding Ballerina's language-type
+set in every consumer, kept in sync by hand as the language grows, is worse than one flag per leaf.
+
+### 1.4 `subtypeFamily`
+
+A `dataBinding` variant's `constraint` and `excludes`, and a `shapes[].envelope`, are all
+`TypeRef`s that describe a **relationship** a declared type must satisfy, not a type to declare
+verbatim. `subtypeFamily` says that relationship is "is a subtype of", open ended over every
+subtype the named type's own module declares, rather than "is exactly this type."
+
+HTTP is the worked case. A resource may return a subtype of `http:StatusCodeResponse`, such as the
+built-in `http:Ok`/`http:Created`/`http:BadRequest` family or a user's own narrowing of one of
+them, and whichever is declared has its `body` field bound the same way `AnydataConsumerRecord`'s
+`value` field is, section 9:
+
+```json
+"returns": {
+  "id": "$service.resource.returns",
+  "type": [
+    { "name": "anydata", "builtin": true },
+    { "name": "Response" },
+    { "name": "StatusCodeResponse", "subtypeFamily": true },
+    { "name": "error", "builtin": true }
+  ],
+  "dataBinding": {
+    "typedescs": [
+      {
+        "constraint": { "name": "anydata", "builtin": true },
+        "excludes": [{ "name": "StatusCodeResponse", "subtypeFamily": true }],
+        "shapes": [{ "form": "bare" }]
+      },
+      {
+        "constraint": { "name": "anydata", "builtin": true },
+        "shapes": [{ "form": "included", "envelope": { "name": "StatusCodeResponse", "subtypeFamily": true }, "bindableFields": ["body"] }]
+      }
+    ]
+  }
+}
+```
+
+`subtypeFamily` names the module's own type and leaves "which subtypes exist" to introspection,
+since a `typedescs[]` entry per concrete subtype could never enumerate a user's own narrowings.
+
+`excludes` reads the same way it always has, disambiguating the same declared type from satisfying
+two variants at once, section 9, except now the exclusion is a whole family: a user record that
+happens to be a subtype of `StatusCodeResponse` is excluded from the `bare` variant regardless of
+which subtype it is, not only when it is `StatusCodeResponse` itself.
 
 ---
 
@@ -130,6 +205,8 @@ error subtype, `error` is the language's.
 
 ```json
 {
+  "id": "$listener",
+  "doc": "Polls the configured broker connection and dispatches each batch to the attached service.",
   "type": { "name": "Listener" },
   "services": ["$service"],
   "multipleServicesAllowed": true,
@@ -142,6 +219,8 @@ error subtype, `error` is the language's.
 
 | Field | Meaning |
 |---|---|
+| `id` | **Required.** Flat, since a listener nests inside nothing. `$listener`, or `$listener1`/`$listener2` when a connector declares more than one. |
+| `doc` | **Required.** What this listener is and when a service attaches to it. Section 5.2 explains why this is required unconditionally rather than only when introspection cannot recover it. |
 | `type` | `TypeRef` for the listener class. |
 | `deprecated` | Optional. Section 5.3. |
 | `services` | `serviceTypes[].id` values this listener can host. |
@@ -209,6 +288,7 @@ knows the Java version of the distribution it targets.
 ```json
 {
   "id": "$service",
+  "doc": "Consumes messages from the subscribed topics/queue and dispatches each poll's batch.",
   "type": { "name": "Service" },
   "concrete": false,
   "multipleListenersAllowed": true,
@@ -220,7 +300,8 @@ knows the Java version of the distribution it targets.
 
 | Field | Meaning |
 |---|---|
-| `id` | Referenced from `listeners[].services` and sibling constructs. |
+| `id` | **Required.** Referenced from `listeners[].services` and sibling constructs. Also the hierarchy root for this type's `handlers.options[]` and their `params[]`, section 0. |
+| `doc` | **Required**, even when `concrete` is `true`. What this service type is for. Unlike handler `doc` (section 5.2), this is required unconditionally: id and doc together are what make every top level construct in the file navigable on its own, not only what introspection cannot recover. |
 | `type` | `TypeRef` for the service object type. |
 | `concrete` | `true` when the type declares its own methods and they can be introspected. `false` for a marker or abstract type. |
 | `multipleListenersAllowed` | Can one service attach to more than one listener at once, as in `service X on l1, l2 {}`? |
@@ -302,18 +383,23 @@ block, so it lives on each option as `addMode`. Section 5.1.
 
 ```json
 {
+  "id": "$service.onConsumerRecord",
   "name": "onConsumerRecord",
   "kind": "remote",
   "doc": "Invoked with each batch of records polled from the subscribed topics.",
   "presence": "required",
   "annotations": ["$functionConfig"],
   "params": [ ],
-  "returns": [{ "name": "error" }, { "name": "()" }]
+  "returns": {
+    "id": "$service.onConsumerRecord.returns",
+    "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+  }
 }
 ```
 
 | Field | Meaning |
 |---|---|
+| `id` | **Required.** Hierarchical: the owning `serviceTypes[].id` plus this handler's `name`. Section 0. |
 | `name` | Under `subset`, the method name to emit. Under `many`, always `"*"`, since the user names each instance. |
 | `kind` | `"remote"` or `"resource"`. |
 | `addMode` | `subset` (default when absent) or `many`. Section 5.1. |
@@ -321,8 +407,7 @@ block, so it lives on each option as `addMode`. Section 5.1.
 | `deprecated` | Optional. Section 5.3. |
 | `presence` | Only under `addMode: "subset"`. A `many` shape has no fixed occurrence count to require. |
 | `annotations` | Ids of annotations with `attachPoint: "function"`. |
-| `returnAnnotations` | Ids of annotations with `attachPoint: "return"`. |
-| `returns` | `TypeRef` or a union. |
+| `returns` | The return type, grouped like a `param`. Section 5.4. |
 
 A `resource` handler is identified by its accessor and path, matching the language form
 `resource function <accessor> <path>()`. Both are required for `kind: "resource"` and neither
@@ -422,6 +507,35 @@ construct does, `deprecated` says why not to use it.
 A deprecated handler still counts for `structure.atLeastOne`. It remains legal, just not
 recommended, so a service satisfying the rule with only a deprecated handler is valid.
 
+### 5.4 `returns`
+
+A return, when present, is grouped into one object rather than three sibling fields, the same
+reasoning that gives a `param` its own object instead of flattening `type`/`dataBinding` onto the
+handler:
+
+```json
+"returns": {
+  "id": "$service.resource.returns",
+  "type": [{ "name": "anydata", "builtin": true }, { "name": "Response" }, { "name": "error", "builtin": true }],
+  "dataBinding": {
+    "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }]
+  },
+  "annotations": ["$cache"]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `id` | **Required.** Hierarchical: the handler's `id` plus the fixed segment `returns`, for example `$service.resource.returns`. Section 0. |
+| `type` | **Required.** `TypeRef` or a union. |
+| `dataBinding` | Optional. Present only when one union member is a user declared subtype the runtime serializes out, such as HTTP's `anydata` response branch. Section 9.1. |
+| `annotations` | Optional. Ids of annotations with `attachPoint: "return"`. |
+
+No `name` and no `presence`: a return has no identifier to emit and is not itself optional the way
+a param slot can be absent, so `param`'s two constructs that exist for those reasons are left out
+here. `returns` is omitted entirely when a handler's language form forbids a return clause, as the
+`file` connector's handlers do.
+
 ---
 
 ## 6. `rules[]`
@@ -437,7 +551,7 @@ a constraint is a new registry entry, not a schema change.
   "message": "A RabbitMQ consumer needs its queue name from exactly one source: @rabbitmq:ServiceConfig { queueName } or the service identifier.",
   "subjects": [
     { "role": "fromAnnotation", "kind": "annotationField", "annotation": "$serviceConfig", "path": ["queueName"] },
-    { "role": "fromIdentifier", "kind": "identifier" }
+    { "kind": "identifier" }
   ],
   "prefer": "fromAnnotation"
 }
@@ -470,10 +584,10 @@ A tagged union. `kind` discriminates, so a malformed subject is always distingui
 | `kind` | Fields | Addresses |
 |---|---|---|
 | `identifier` | none | The identifier or base path slot. |
-| `annotation` | `name` | An annotation as a whole, its presence rather than a field inside it. |
+| `annotation` | `id` | An annotation as a whole (its `annotations[].id`), its presence rather than a field inside it. |
 | `annotationField` | `annotation`, `path` | One field inside an annotation. `path` is an array, so nested fields such as `["retryConfig", "maxCount"]` are reachable. |
-| `handler` | `name` | A handler function. |
-| `param` | `handler`, `name` | One parameter of a handler. |
+| `handler` | `id` | A handler option, by its `HandlerOption.id`. Section 6.1.1. |
+| `param` | `id` | A parameter, by its `Param.id`. Section 6.1.1. |
 
 Every subject also accepts:
 
@@ -481,6 +595,40 @@ Every subject also accepts:
 |---|---|
 | `serviceType` | Which service type this subject belongs to. Defaults to the enclosing one. Required in a top level rule. |
 | `role` | This subject's name within its rule. Asymmetric constraints fix the names such as `when` and `then`. Symmetric ones use free labels, referenced by `prefer`. |
+
+### 6.1.1 Addressing a `handler` or `param` subject by id
+
+Both address the construct's own id, never its `name`. A `subset`-mode handler's `name` is a fixed
+method name and would work, but an `addMode: "many"` option's `name` is always `"*"`,
+indistinguishable from any other `many` option on the same service type. Rather than support two
+addressing schemes depending on `addMode`, both subject kinds always use `id`. The same reasoning
+carries to `param`: a `many`-mode param's enclosing handler can itself be a `many` option, so a
+`handler`/`name` pair would inherit the same ambiguity; the param's own hierarchical id (section 0)
+never does.
+
+GraphQL is the worked case: a schema is invalid without at least one query field, so `$service.query`
+needs an `atLeastOne` constraint, but `name: "*"` would also match `$service.mutation` and
+`$service.subscription`:
+
+```json
+{
+  "id": "$atLeastOneQueryField",
+  "rule": "structure.atLeastOne",
+  "message": "A GraphQL service must expose at least one query field.",
+  "subjects": [{ "kind": "handler", "id": "$service.query" }]
+}
+```
+
+A single subject is a legal `structure.atLeastOne` (section 6.2): for a `many` option, "present"
+means "instantiated one or more times" rather than "declared or not," so the constraint still reads
+naturally with only one member in the set.
+
+`param`'s `id` follows the same rule, addressing `Param.id` directly instead of a
+`handler`/`name` pair:
+
+```json
+{ "role": "when", "kind": "param", "id": "$service.onMessage.batchSize" }
+```
 
 ### 6.2 Constraint registry
 
@@ -495,11 +643,6 @@ Every subject also accepts:
 
 The first three appear in the corpus. The rest are reachable without touching the schema.
 
-`structure.atLeastOne` shows the design working. README section 6 originally ruled out "at least
-one of N" because the old closed enum made it a schema change. Evidence turned up in the SMB
-library, which requires at least one `onFile*` handler or `onFileDelete`, and expressing it cost
-one registry row and one rule instance.
-
 Asymmetric constraints use `role` instead of positional members:
 
 ```json
@@ -509,7 +652,7 @@ Asymmetric constraints use `role` instead of positional members:
   "severity": "warning",
   "message": "batchSize has no effect unless mode is \"batch\".",
   "subjects": [
-    { "role": "when", "kind": "param", "handler": "onMessage", "name": "batchSize" },
+    { "role": "when", "kind": "param", "id": "$service.onMessage.batchSize" },
     { "role": "then", "kind": "annotationField", "annotation": "$serviceConfig", "path": ["mode"] }
   ]
 }
@@ -521,17 +664,19 @@ Asymmetric constraints use `role` instead of positional members:
 
 ```json
 {
+  "id": "$service.onUpdate.afterEntry",
   "name": "afterEntry",
   "doc": "The row state after the change.",
-  "type": { "name": "record {}" },
+  "type": { "name": "record {}", "builtin": true },
   "presence": "required",
-  "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}" }, "shapes": [{ "form": "bare" }] }] },
+  "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }] },
   "annotations": ["$payload"]
 }
 ```
 
 | Field | Meaning |
 |---|---|
+| `id` | **Required.** Hierarchical: the owning handler's `id` plus this parameter's `name`. On an `addMode: "many"` slot this names the slot itself, not each user named occurrence. Section 0. |
 | `name` | The parameter name to emit. Required on every fixed slot, omitted only when `addMode` is `"many"`. |
 | `doc` | **Required.** What this parameter carries. Section 5.2. |
 | `deprecated` | Optional. Section 5.3. |
@@ -570,28 +715,32 @@ it, and the annotation never reaches back with a list of what it applies to:
 |---|---|
 | `service` | `serviceTypes[].annotations` |
 | `function` | `handlers.options[].annotations` |
-| `return` | `handlers.options[].returnAnnotations` |
+| `return` | `handlers.options[].returns.annotations` |
 | `parameter` | `params[].annotations` |
-
-This replaces the earlier `appliesTo` reverse list, which named service types rather than the
-attachment site. Every annotation in the corpus is now reachable by forward reference, so
-`appliesTo` was removed rather than kept as an alternative.
 
 No `fieldOverrides`. Every corpus instance was an unused empty array.
 
 ---
 
-## 9. `params[].dataBinding`
+## 9. Data binding: `params[].dataBinding` and `handlers.options[].returns.dataBinding`
 
-Written inline on the parameter it describes, not in a top level registry. Modeled on Ballerina's
+Written inline on the slot it describes, not in a top level registry. Modeled on Ballerina's
 `typedesc<T>`: a user suppliable type, bound by an upper constraint, embedded into the declared
 type in one or more ways. A binding is a set of independent variants that share nothing.
+
+The same shape describes both directions of the one idea, a declared type narrower than a builtin
+constraint that the runtime converts on the way past:
+
+| Slot | Field | Direction | Worked case |
+|---|---|---|---|
+| `params[]` | `dataBinding` | Inbound. Wire payload converted into the declared type. | Kafka's `records` projecting a batch's value. |
+| `handlers.options[].returns` | `dataBinding` | Outbound. The declared return type converted out to wire form. | An HTTP resource returning `anydata`, serialized as the response body. |
 
 ```json
 "dataBinding": {
   "typedescs": [
-    { "constraint": { "name": "anydata" }, "excludes": [{ "name": "AnydataMessage" }], "shapes": [{ "form": "bare" }] },
-    { "constraint": { "name": "anydata" }, "shapes": [{ "form": "included", "envelope": { "name": "AnydataMessage" }, "bindableFields": ["content"] }] }
+    { "constraint": { "name": "anydata", "builtin": true }, "excludes": [{ "name": "AnydataMessage" }], "shapes": [{ "form": "bare" }] },
+    { "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "included", "envelope": { "name": "AnydataMessage" }, "bindableFields": ["content"] }] }
   ]
 }
 ```
@@ -600,9 +749,9 @@ type in one or more ways. A binding is a set of independent variants that share 
 |---|---|
 | `typedescs[]` | Independent variants, below. |
 
-A binding describes one slot, so it carries no id and nothing references it. Two parameters that
-bind the same way each state it, which costs a little repetition and keeps every parameter
-readable on its own.
+A binding describes one slot, so it carries no id and nothing references it. Two slots that bind
+the same way each state it, which costs a little repetition and keeps every slot readable on its
+own.
 
 | `typedescs[]` field | Meaning |
 |---|---|
@@ -617,6 +766,11 @@ readable on its own.
 | `stream` | `element`, `completionType` | `stream<T, completionType>`. Same as `array` but streamed. |
 | `included` | `envelope`, `bindableFields` | The user record does `*envelope;` and retypes only `bindableFields`. Everything else stays fixed. |
 
+`envelope` (and `constraint`, and `excludes`) can carry `subtypeFamily: true` when the relationship
+is "any subtype of this type", not the exact type alone, section 1.4. HTTP's `StatusCodeResponse`
+family is the worked case: the envelope is not one fixed record the way `AnydataConsumerRecord` is,
+it is a whole open ended set of records the `http` module and the user both add to.
+
 **Why `excludes` exists.** An envelope record such as `AnydataMessage` is itself valid `anydata`,
 so without it the same declared type would satisfy the `bare` variant and also be the unoverridden
 instantiation of the `included` variant. A generator would have no way to know which was meant.
@@ -628,8 +782,8 @@ independently:
 ```json
 "dataBinding": {
   "typedescs": [
-    { "constraint": { "name": "anydata" }, "excludes": [{ "name": "AnydataConsumerRecord" }], "shapes": [{ "form": "array", "element": "bare" }] },
-    { "constraint": { "name": "anydata" }, "shapes": [{ "form": "array", "element": "included", "envelope": { "name": "AnydataConsumerRecord" }, "bindableFields": ["value"] }] }
+    { "constraint": { "name": "anydata", "builtin": true }, "excludes": [{ "name": "AnydataConsumerRecord" }], "shapes": [{ "form": "array", "element": "bare" }] },
+    { "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "array", "element": "included", "envelope": { "name": "AnydataConsumerRecord" }, "bindableFields": ["value"] }] }
   ]
 }
 ```
@@ -648,7 +802,7 @@ Two bounds that happen to share shapes are still two variants. FTP's CSV rows ma
       ]
     },
     {
-      "constraint": { "name": "record {}" },
+      "constraint": { "name": "record {}", "builtin": true },
       "shapes": [
         { "form": "array", "element": "bare" },
         { "form": "stream", "element": "bare", "completionType": { "name": "error?" } }
@@ -660,6 +814,35 @@ Two bounds that happen to share shapes are still two variants. FTP's CSV rows ma
 
 No rule level envelope, it lives on the `included` shape that uses it. No `fixedFields`, they are
 the envelope's fields minus `bindableFields`.
+
+### 9.1 `handlers.options[].returns.dataBinding`
+
+Present only when one member of `returns.type`'s union is a builtin constraint the runtime
+serializes the declared type out through, rather than a fixed type like `error` or a module type
+like `http:Response`. Same `typedescs[]`/`shapes[]` shape as `dataBinding` above, read outbound
+instead of inbound:
+
+```json
+"returns": {
+  "id": "$service.resource.returns",
+  "type": [{ "name": "anydata", "builtin": true }, { "name": "Response" }, { "name": "error", "builtin": true }],
+  "dataBinding": {
+    "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }]
+  }
+}
+```
+
+Here the `anydata` branch is the one a user's declared return type actually varies over; `Response`
+and `error` are fixed alternatives with no schema to bind, so they are not variants and are not
+restated inside `dataBinding`. A streamed return, as GraphQL's subscription fields and gRPC's
+server and bidirectional streaming RPCs use, states it the same way `dataBinding` does for a
+streamed param, `{ "form": "stream", "element": "bare" }`, since the bindable part is each element
+the stream yields, not the stream itself.
+
+No `excludes` has shown up on a return's `dataBinding` in the corpus yet: excluding an envelope only
+matters when that envelope is itself valid `anydata` and would otherwise also satisfy the `bare`
+variant, the same reasoning as the "Why `excludes` exists" note above, and no return type in the
+corpus embeds one. The field remains legal here should a connector need it.
 
 ---
 
@@ -728,13 +911,9 @@ consumers.
 
 ### 11.4 Why minor bumps are safe
 
-The open vocabulary and the skip unknown policy in section 6 are what make this work. Because a
-consumer that meets an unfamiliar rule id skips it instead of failing, a new constraint kind is a
-registry row and is additive by construction. Without that policy every new rule kind would force a
-major bump.
-
-The corollary for authors: anything expected to grow should get an open vocabulary before v1.0
-freezes.
+The open vocabulary and skip-unknown policy in section 6 make a new constraint kind a registry row,
+additive by construction, rather than a schema change. The corollary for authors: anything expected
+to grow should get an open vocabulary before v1.0 freezes.
 
 ### 11.5 The v1.0 baseline
 
