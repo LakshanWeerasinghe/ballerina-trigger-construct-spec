@@ -84,8 +84,24 @@
             ],
             "returns": {
               "id": "$service.resource.returns",
-              "type": [{ "name": "anydata", "builtin": true }, { "name": "Response" }, { "name": "error", "builtin": true }],
-              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] },
+              "type": [
+                { "name": "anydata", "builtin": true },
+                { "name": "Response" },
+                { "name": "StatusCodeResponse", "subtypeFamily": true },
+                { "name": "error", "builtin": true }
+              ],
+              "dataBinding": {
+                "typedescs": [
+                  {
+                    "constraint": { "name": "anydata", "builtin": true },
+                    "shapes": [{ "form": "bare" }]
+                  },
+                  {
+                    "constraint": { "name": "anydata", "builtin": true },
+                    "shapes": [{ "form": "included", "envelope": { "name": "StatusCodeResponse", "subtypeFamily": true }, "bindableFields": ["body"] }]
+                  }
+                ]
+              },
               "annotations": ["$cache"]
             }
           }

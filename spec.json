@@ -72,6 +72,10 @@
             "builtin": {
               "description": "Present and true only when name is one of Ballerina's own language types (the basic types, anydata, any, error, (), record {}, and similarly). Absent, never false, for a module type.",
               "const": true
+            },
+            "subtypeFamily": {
+              "description": "Present and true only where this reference stands for the named type and every introspectable subtype of it, not the exact type alone, such as http:StatusCodeResponse covering http:Ok, http:Created, and any user declared narrowing. Meaningful wherever a typeRef names a relationship a declared type must satisfy rather than the declared type itself: dataBinding's constraint, excludes, and envelope. Absent, never false, elsewhere.",
+              "const": true
             }
           }
         },

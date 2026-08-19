@@ -81,6 +81,7 @@ A type reference is a **tree**, never a type expression in a string. A node is e
 | `name` | A named type. Mutually exclusive with `shape`. |
 | `packageInfo` | Only alongside `name`, and only for a type from another module. |
 | `builtin` | Only alongside `name`. `true` when `name` is one of Ballerina's own language types. Absent, never `false`, for a module type. Section 1.3. |
+| `subtypeFamily` | Only alongside `name`. `true` when this reference stands for the named type and every introspectable subtype of it, not the exact type alone. Meaningful inside `dataBinding`. Section 1.4. |
 | `shape` | How a constructed type is built. Section 1.1. |
 | `elementType` | The type the shape holds. |
 | `completionType` | `stream` only, and optional. |
@@ -166,6 +167,55 @@ language types is technically fixed and could be hardcoded by a consumer, but ha
 copy of that set in every consumer, kept in sync by hand as the language adds one, is worse than a
 one bit flag stated once per leaf. So `builtin` is metadata for convenience, not for
 non-introspectability, the one field in this schema justified that way.
+
+### 1.4 `subtypeFamily`
+
+A `dataBinding` variant's `constraint` and `excludes`, and a `shapes[].envelope`, are all
+`TypeRef`s that describe a **relationship** a declared type must satisfy, not a type to declare
+verbatim. `subtypeFamily` says that relationship is "is a subtype of", open ended over every
+subtype the named type's own module declares, rather than "is exactly this type."
+
+HTTP is the worked case. A resource may return a subtype of `http:StatusCodeResponse`, such as the
+built-in `http:Ok`/`http:Created`/`http:BadRequest` family or a user's own narrowing of one of
+them, and whichever is declared has its `body` field bound the same way `AnydataConsumerRecord`'s
+`value` field is, section 9:
+
+```json
+"returns": {
+  "id": "$service.resource.returns",
+  "type": [
+    { "name": "anydata", "builtin": true },
+    { "name": "Response" },
+    { "name": "StatusCodeResponse", "subtypeFamily": true },
+    { "name": "error", "builtin": true }
+  ],
+  "dataBinding": {
+    "typedescs": [
+      {
+        "constraint": { "name": "anydata", "builtin": true },
+        "excludes": [{ "name": "StatusCodeResponse", "subtypeFamily": true }],
+        "shapes": [{ "form": "bare" }]
+      },
+      {
+        "constraint": { "name": "anydata", "builtin": true },
+        "shapes": [{ "form": "included", "envelope": { "name": "StatusCodeResponse", "subtypeFamily": true }, "bindableFields": ["body"] }]
+      }
+    ]
+  }
+}
+```
+
+Without `subtypeFamily` the only way to say this would be one `typedescs[]` entry per concrete
+subtype, `http:Ok`, `http:Created`, and every other status code response, plus every user defined
+narrowing, none of which this file could ever enumerate since user narrowings do not exist until a
+consumer's own generation session creates one. `subtypeFamily` names the module's own type instead
+and leaves "which subtypes exist" to introspection, the same trade `builtin` makes for the
+language's fixed type set, only here the set is genuinely open rather than fixed.
+
+`excludes` reads the same way it always has, disambiguating the same declared type from satisfying
+two variants at once, section 9, except now the exclusion is a whole family: a user record that
+happens to be a subtype of `StatusCodeResponse` is excluded from the `bare` variant regardless of
+which subtype it is, not only when it is `StatusCodeResponse` itself.
 
 ---
 
@@ -708,6 +758,11 @@ own.
 | `array` | `element` | `T[]`. `element` says whether each item is `bare` or `included`. |
 | `stream` | `element`, `completionType` | `stream<T, completionType>`. Same as `array` but streamed. |
 | `included` | `envelope`, `bindableFields` | The user record does `*envelope;` and retypes only `bindableFields`. Everything else stays fixed. |
+
+`envelope` (and `constraint`, and `excludes`) can carry `subtypeFamily: true` when the relationship
+is "any subtype of this type", not the exact type alone, section 1.4. HTTP's `StatusCodeResponse`
+family is the worked case: the envelope is not one fixed record the way `AnydataConsumerRecord` is,
+it is a whole open ended set of records the `http` module and the user both add to.
 
 **Why `excludes` exists.** An envelope record such as `AnydataMessage` is itself valid `anydata`,
 so without it the same declared type would satisfy the `bare` variant and also be the unoverridden
