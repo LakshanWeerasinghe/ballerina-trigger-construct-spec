@@ -38,8 +38,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onMessages.returns"
+            "returns": { "id": "$service.onMessages.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onAccountReviewUpdate",
@@ -56,8 +55,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onAccountReviewUpdate.returns"
+            "returns": {
+              "id": "$service.onAccountReviewUpdate.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onAccountUpdate",
@@ -74,8 +75,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onAccountUpdate.returns"
+            "returns": {
+              "id": "$service.onAccountUpdate.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onBusinessCapabilityUpdate",
@@ -92,8 +95,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onBusinessCapabilityUpdate.returns"
+            "returns": {
+              "id": "$service.onBusinessCapabilityUpdate.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onMessageTemplateQualityUpdate",
@@ -110,8 +115,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onMessageTemplateQualityUpdate.returns"
+            "returns": {
+              "id": "$service.onMessageTemplateQualityUpdate.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onMessageTemplateStatusUpdate",
@@ -128,8 +135,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onMessageTemplateStatusUpdate.returns"
+            "returns": {
+              "id": "$service.onMessageTemplateStatusUpdate.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onPhoneNumberNameUpdate",
@@ -146,8 +155,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onPhoneNumberNameUpdate.returns"
+            "returns": {
+              "id": "$service.onPhoneNumberNameUpdate.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onPhoneNumberQualityUpdate",
@@ -164,8 +175,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onPhoneNumberQualityUpdate.returns"
+            "returns": {
+              "id": "$service.onPhoneNumberQualityUpdate.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onSecurity",
@@ -182,8 +195,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onSecurity.returns"
+            "returns": { "id": "$service.onSecurity.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onTemplateCategoryUpdate",
@@ -200,8 +212,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onTemplateCategoryUpdate.returns"
+            "returns": {
+              "id": "$service.onTemplateCategoryUpdate.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onError",
@@ -218,8 +232,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onError.returns"
+            "returns": { "id": "$service.onError.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           }
         ]
       },

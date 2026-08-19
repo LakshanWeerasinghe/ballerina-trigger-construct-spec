@@ -56,8 +56,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onMessage.returns"
+            "returns": { "id": "$service.onMessage.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onError",
@@ -74,8 +73,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onError.returns"
+            "returns": { "id": "$service.onError.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           }
         ]
       }

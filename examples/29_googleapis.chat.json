@@ -44,8 +44,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onMessage.returns"
+            "returns": { "id": "$service.onMessage.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onAddedToSpace",
@@ -69,8 +68,10 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onAddedToSpace.returns"
+            "returns": {
+              "id": "$service.onAddedToSpace.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onRemovedFromSpace",
@@ -87,8 +88,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onRemovedFromSpace.returns"
+            "returns": {
+              "id": "$service.onRemovedFromSpace.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onCardClicked",
@@ -112,8 +115,10 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onCardClicked.returns"
+            "returns": {
+              "id": "$service.onCardClicked.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onWidgetUpdated",
@@ -137,8 +142,10 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onWidgetUpdated.returns"
+            "returns": {
+              "id": "$service.onWidgetUpdated.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onAppCommand",
@@ -162,8 +169,10 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onAppCommand.returns"
+            "returns": {
+              "id": "$service.onAppCommand.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onAppHome",
@@ -187,8 +196,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onAppHome.returns"
+            "returns": { "id": "$service.onAppHome.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onSubmitForm",
@@ -212,8 +220,10 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onSubmitForm.returns"
+            "returns": {
+              "id": "$service.onSubmitForm.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           }
         ]
       },

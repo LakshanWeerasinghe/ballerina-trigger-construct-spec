@@ -44,8 +44,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "Service" }, { "name": "UpgradeError" }],
-            "returnId": "$upgradeService.get.returns"
+            "returns": { "id": "$upgradeService.get.returns", "type": [{ "name": "Service" }, { "name": "UpgradeError" }] }
           }
         ]
       }
@@ -74,8 +73,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onOpen.returns"
+            "returns": { "id": "$service.onOpen.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onMessage",
@@ -100,8 +98,16 @@
                 "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "CloseFrame" }, { "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onMessage.returns"
+            "returns": {
+              "id": "$service.onMessage.returns",
+              "type": [
+                { "name": "anydata", "builtin": true },
+                { "name": "CloseFrame" },
+                { "name": "error", "builtin": true },
+                { "name": "()", "builtin": true }
+              ],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           },
           {
             "id": "$service.onTextMessage",
@@ -125,8 +131,16 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "CloseFrame" }, { "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onTextMessage.returns"
+            "returns": {
+              "id": "$service.onTextMessage.returns",
+              "type": [
+                { "name": "anydata", "builtin": true },
+                { "name": "CloseFrame" },
+                { "name": "error", "builtin": true },
+                { "name": "()", "builtin": true }
+              ],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           },
           {
             "id": "$service.onBinaryMessage",
@@ -150,8 +164,16 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "CloseFrame" }, { "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onBinaryMessage.returns"
+            "returns": {
+              "id": "$service.onBinaryMessage.returns",
+              "type": [
+                { "name": "anydata", "builtin": true },
+                { "name": "CloseFrame" },
+                { "name": "error", "builtin": true },
+                { "name": "()", "builtin": true }
+              ],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           },
           {
             "id": "$service.onPing",
@@ -175,8 +197,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onPing.returns"
+            "returns": { "id": "$service.onPing.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onPong",
@@ -200,8 +221,7 @@
                 "presence": "required"
               }
             ],
-            "returns": { "name": "()", "builtin": true },
-            "returnId": "$service.onPong.returns"
+            "returns": { "id": "$service.onPong.returns", "type": { "name": "()", "builtin": true } }
           },
           {
             "id": "$service.onIdleTimeout",
@@ -218,8 +238,10 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onIdleTimeout.returns"
+            "returns": {
+              "id": "$service.onIdleTimeout.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onClose",
@@ -250,8 +272,7 @@
                 "presence": "required"
               }
             ],
-            "returns": { "name": "()", "builtin": true },
-            "returnId": "$service.onClose.returns"
+            "returns": { "id": "$service.onClose.returns", "type": { "name": "()", "builtin": true } }
           },
           {
             "id": "$service.onError",
@@ -275,8 +296,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onError.returns"
+            "returns": { "id": "$service.onError.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.dispatched",
@@ -302,8 +322,16 @@
                 "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "CloseFrame" }, { "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.dispatched.returns"
+            "returns": {
+              "id": "$service.dispatched.returns",
+              "type": [
+                { "name": "anydata", "builtin": true },
+                { "name": "CloseFrame" },
+                { "name": "error", "builtin": true },
+                { "name": "()", "builtin": true }
+              ],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           },
           {
             "id": "$service.dispatchedError",
@@ -327,8 +355,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.dispatchedError.returns"
+            "returns": {
+              "id": "$service.dispatchedError.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           }
         ]
       },

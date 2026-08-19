@@ -38,8 +38,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onMessage.returns"
+            "returns": { "id": "$service.onMessage.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onEditedMessage",
@@ -56,8 +55,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onEditedMessage.returns"
+            "returns": {
+              "id": "$service.onEditedMessage.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onChannelPost",
@@ -74,8 +75,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onChannelPost.returns"
+            "returns": {
+              "id": "$service.onChannelPost.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onEditedChannelPost",
@@ -92,8 +95,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onEditedChannelPost.returns"
+            "returns": {
+              "id": "$service.onEditedChannelPost.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onCallbackQuery",
@@ -110,8 +115,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onCallbackQuery.returns"
+            "returns": {
+              "id": "$service.onCallbackQuery.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onInlineQuery",
@@ -128,8 +135,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onInlineQuery.returns"
+            "returns": {
+              "id": "$service.onInlineQuery.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onPoll",
@@ -146,8 +155,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onPoll.returns"
+            "returns": { "id": "$service.onPoll.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onPreCheckoutQuery",
@@ -164,8 +172,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onPreCheckoutQuery.returns"
+            "returns": {
+              "id": "$service.onPreCheckoutQuery.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onShippingQuery",
@@ -182,8 +192,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onShippingQuery.returns"
+            "returns": {
+              "id": "$service.onShippingQuery.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           }
         ]
       },

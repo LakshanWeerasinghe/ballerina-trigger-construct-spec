@@ -358,8 +358,10 @@ block, so it lives on each option as `addMode`. Section 5.1.
   "presence": "required",
   "annotations": ["$functionConfig"],
   "params": [ ],
-  "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-  "returnId": "$service.onConsumerRecord.returns"
+  "returns": {
+    "id": "$service.onConsumerRecord.returns",
+    "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+  }
 }
 ```
 
@@ -373,9 +375,7 @@ block, so it lives on each option as `addMode`. Section 5.1.
 | `deprecated` | Optional. Section 5.3. |
 | `presence` | Only under `addMode: "subset"`. A `many` shape has no fixed occurrence count to require. |
 | `annotations` | Ids of annotations with `attachPoint: "function"`. |
-| `returnAnnotations` | Ids of annotations with `attachPoint: "return"`. |
-| `returns` | `TypeRef` or a union. |
-| `returnId` | **Required exactly when `returns` is present.** Hierarchical: this handler's `id` plus the fixed segment `returns`. |
+| `returns` | The return type, grouped like a `param`. Section 5.4. |
 
 A `resource` handler is identified by its accessor and path, matching the language form
 `resource function <accessor> <path>()`. Both are required for `kind: "resource"` and neither
@@ -474,6 +474,35 @@ construct does, `deprecated` says why not to use it.
 
 A deprecated handler still counts for `structure.atLeastOne`. It remains legal, just not
 recommended, so a service satisfying the rule with only a deprecated handler is valid.
+
+### 5.4 `returns`
+
+A return, when present, is grouped into one object rather than three sibling fields, the same
+reasoning that gives a `param` its own object instead of flattening `type`/`dataBinding` onto the
+handler:
+
+```json
+"returns": {
+  "id": "$service.resource.returns",
+  "type": [{ "name": "anydata", "builtin": true }, { "name": "Response" }, { "name": "error", "builtin": true }],
+  "dataBinding": {
+    "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }]
+  },
+  "annotations": ["$cache"]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `id` | **Required.** Hierarchical: the handler's `id` plus the fixed segment `returns`, for example `$service.resource.returns`. Section 0. |
+| `type` | **Required.** `TypeRef` or a union. |
+| `dataBinding` | Optional. Present only when one union member is a user declared subtype the runtime serializes out, such as HTTP's `anydata` response branch. Section 9.1. |
+| `annotations` | Optional. Ids of annotations with `attachPoint: "return"`. |
+
+No `name` and no `presence`: a return has no identifier to emit and is not itself optional the way
+a param slot can be absent, so `param`'s two constructs that exist for those reasons are left out
+here. `returns` is omitted entirely when a handler's language form forbids a return clause, as the
+`file` connector's handlers do.
 
 ---
 
@@ -625,7 +654,7 @@ it, and the annotation never reaches back with a list of what it applies to:
 |---|---|
 | `service` | `serviceTypes[].annotations` |
 | `function` | `handlers.options[].annotations` |
-| `return` | `handlers.options[].returnAnnotations` |
+| `return` | `handlers.options[].returns.annotations` |
 | `parameter` | `params[].annotations` |
 
 This replaces the earlier `appliesTo` reverse list, which named service types rather than the
@@ -636,11 +665,19 @@ No `fieldOverrides`. Every corpus instance was an unused empty array.
 
 ---
 
-## 9. `params[].dataBinding`
+## 9. Data binding: `params[].dataBinding` and `handlers.options[].returns.dataBinding`
 
-Written inline on the parameter it describes, not in a top level registry. Modeled on Ballerina's
+Written inline on the slot it describes, not in a top level registry. Modeled on Ballerina's
 `typedesc<T>`: a user suppliable type, bound by an upper constraint, embedded into the declared
 type in one or more ways. A binding is a set of independent variants that share nothing.
+
+The same shape describes both directions of the one idea, a declared type narrower than a builtin
+constraint that the runtime converts on the way past:
+
+| Slot | Field | Direction | Worked case |
+|---|---|---|---|
+| `params[]` | `dataBinding` | Inbound. Wire payload converted into the declared type. | Kafka's `records` projecting a batch's value. |
+| `handlers.options[].returns` | `dataBinding` | Outbound. The declared return type converted out to wire form. | An HTTP resource returning `anydata`, serialized as the response body. |
 
 ```json
 "dataBinding": {
@@ -655,9 +692,9 @@ type in one or more ways. A binding is a set of independent variants that share 
 |---|---|
 | `typedescs[]` | Independent variants, below. |
 
-A binding describes one slot, so it carries no id and nothing references it. Two parameters that
-bind the same way each state it, which costs a little repetition and keeps every parameter
-readable on its own.
+A binding describes one slot, so it carries no id and nothing references it. Two slots that bind
+the same way each state it, which costs a little repetition and keeps every slot readable on its
+own.
 
 | `typedescs[]` field | Meaning |
 |---|---|
@@ -715,6 +752,35 @@ Two bounds that happen to share shapes are still two variants. FTP's CSV rows ma
 
 No rule level envelope, it lives on the `included` shape that uses it. No `fixedFields`, they are
 the envelope's fields minus `bindableFields`.
+
+### 9.1 `handlers.options[].returns.dataBinding`
+
+Present only when one member of `returns.type`'s union is a builtin constraint the runtime
+serializes the declared type out through, rather than a fixed type like `error` or a module type
+like `http:Response`. Same `typedescs[]`/`shapes[]` shape as `dataBinding` above, read outbound
+instead of inbound:
+
+```json
+"returns": {
+  "id": "$service.resource.returns",
+  "type": [{ "name": "anydata", "builtin": true }, { "name": "Response" }, { "name": "error", "builtin": true }],
+  "dataBinding": {
+    "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }]
+  }
+}
+```
+
+Here the `anydata` branch is the one a user's declared return type actually varies over; `Response`
+and `error` are fixed alternatives with no schema to bind, so they are not variants and are not
+restated inside `dataBinding`. A streamed return, as GraphQL's subscription fields and gRPC's
+server and bidirectional streaming RPCs use, states it the same way `dataBinding` does for a
+streamed param, `{ "form": "stream", "element": "bare" }`, since the bindable part is each element
+the stream yields, not the stream itself.
+
+No `excludes` has shown up on a return's `dataBinding` in the corpus yet: excluding an envelope only
+matters when that envelope is itself valid `anydata` and would otherwise also satisfy the `bare`
+variant, the same reasoning as the "Why `excludes` exists" note above, and no return type in the
+corpus embeds one. The field remains legal here should a connector need it.
 
 ---
 

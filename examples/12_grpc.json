@@ -46,8 +46,11 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.unary.returns"
+            "returns": {
+              "id": "$service.unary.returns",
+              "type": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           },
           {
             "id": "$service.serverStreaming",
@@ -71,16 +74,21 @@
                 "presence": "optional"
               }
             ],
-            "returns": [
-              {
-                "shape": "stream",
-                "elementType": { "name": "anydata", "builtin": true },
-                "completionType": [{ "name": "Error" }, { "name": "()", "builtin": true }]
-              },
-              { "name": "error", "builtin": true },
-              { "name": "()", "builtin": true }
-            ],
-            "returnId": "$service.serverStreaming.returns"
+            "returns": {
+              "id": "$service.serverStreaming.returns",
+              "type": [
+                {
+                  "shape": "stream",
+                  "elementType": { "name": "anydata", "builtin": true },
+                  "completionType": [{ "name": "Error" }, { "name": "()", "builtin": true }]
+                },
+                { "name": "error", "builtin": true },
+                { "name": "()", "builtin": true }
+              ],
+              "dataBinding": {
+                "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "stream", "element": "bare" }] }]
+              }
+            }
           },
           {
             "id": "$service.clientStreaming",
@@ -108,8 +116,11 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.clientStreaming.returns"
+            "returns": {
+              "id": "$service.clientStreaming.returns",
+              "type": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           },
           {
             "id": "$service.bidiStreaming",
@@ -137,16 +148,21 @@
                 "presence": "required"
               }
             ],
-            "returns": [
-              {
-                "shape": "stream",
-                "elementType": { "name": "anydata", "builtin": true },
-                "completionType": [{ "name": "Error" }, { "name": "()", "builtin": true }]
-              },
-              { "name": "error", "builtin": true },
-              { "name": "()", "builtin": true }
-            ],
-            "returnId": "$service.bidiStreaming.returns"
+            "returns": {
+              "id": "$service.bidiStreaming.returns",
+              "type": [
+                {
+                  "shape": "stream",
+                  "elementType": { "name": "anydata", "builtin": true },
+                  "completionType": [{ "name": "Error" }, { "name": "()", "builtin": true }]
+                },
+                { "name": "error", "builtin": true },
+                { "name": "()", "builtin": true }
+              ],
+              "dataBinding": {
+                "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "stream", "element": "bare" }] }]
+              }
+            }
           }
         ]
       }

@@ -60,8 +60,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onMessage.returns"
+            "returns": { "id": "$service.onMessage.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onRequest",
@@ -99,8 +98,11 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
-            "returnId": "$service.onRequest.returns"
+            "returns": {
+              "id": "$service.onRequest.returns",
+              "type": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           },
           {
             "id": "$service.onError",
@@ -124,8 +126,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onError.returns"
+            "returns": { "id": "$service.onError.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           }
         ]
       },

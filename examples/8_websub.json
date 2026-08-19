@@ -39,8 +39,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "Acknowledgement" }, { "name": "SubscriptionDeletedError" }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onEventNotification.returns"
+            "returns": {
+              "id": "$service.onEventNotification.returns",
+              "type": [{ "name": "Acknowledgement" }, { "name": "SubscriptionDeletedError" }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onSubscriptionVerification",
@@ -57,8 +59,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "SubscriptionVerificationSuccess" }, { "name": "SubscriptionVerificationError" }],
-            "returnId": "$service.onSubscriptionVerification.returns"
+            "returns": {
+              "id": "$service.onSubscriptionVerification.returns",
+              "type": [{ "name": "SubscriptionVerificationSuccess" }, { "name": "SubscriptionVerificationError" }]
+            }
           },
           {
             "id": "$service.onUnsubscriptionVerification",
@@ -75,8 +79,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "UnsubscriptionVerificationSuccess" }, { "name": "UnsubscriptionVerificationError" }],
-            "returnId": "$service.onUnsubscriptionVerification.returns"
+            "returns": {
+              "id": "$service.onUnsubscriptionVerification.returns",
+              "type": [{ "name": "UnsubscriptionVerificationSuccess" }, { "name": "UnsubscriptionVerificationError" }]
+            }
           },
           {
             "id": "$service.onSubscriptionValidationDenied",
@@ -93,8 +99,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "Acknowledgement" }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onSubscriptionValidationDenied.returns"
+            "returns": {
+              "id": "$service.onSubscriptionValidationDenied.returns",
+              "type": [{ "name": "Acknowledgement" }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$service.onHubError",
@@ -111,8 +119,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "Acknowledgement" }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onHubError.returns"
+            "returns": { "id": "$service.onHubError.returns", "type": [{ "name": "Acknowledgement" }, { "name": "()", "builtin": true }] }
           }
         ]
       }

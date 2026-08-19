@@ -43,8 +43,11 @@
                 "annotations": ["$id"]
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
-            "returnId": "$service.query.returns"
+            "returns": {
+              "id": "$service.query.returns",
+              "type": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           },
           {
             "id": "$service.mutation",
@@ -63,8 +66,11 @@
                 "annotations": ["$id"]
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
-            "returnId": "$service.mutation.returns"
+            "returns": {
+              "id": "$service.mutation.returns",
+              "type": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           },
           {
             "id": "$service.subscription",
@@ -85,8 +91,17 @@
                 "annotations": ["$id"]
               }
             ],
-            "returns": { "shape": "stream", "elementType": { "name": "anydata", "builtin": true }, "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] },
-            "returnId": "$service.subscription.returns"
+            "returns": {
+              "id": "$service.subscription.returns",
+              "type": {
+                "shape": "stream",
+                "elementType": { "name": "anydata", "builtin": true },
+                "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+              },
+              "dataBinding": {
+                "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "stream", "element": "bare" }] }]
+              }
+            }
           }
         ]
       }

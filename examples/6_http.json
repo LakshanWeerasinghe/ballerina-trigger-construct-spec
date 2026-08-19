@@ -33,7 +33,6 @@
             "accessor": { "presence": "required", "values": ["get", "post", "put", "delete", "patch", "head", "options", "default"] },
             "path": { "presence": "required" },
             "annotations": ["$resourceConfig"],
-            "returnAnnotations": ["$cache"],
             "params": [
               {
                 "id": "$service.resource.caller",
@@ -83,8 +82,12 @@
                 "annotations": ["$header"]
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "Response" }, { "name": "error", "builtin": true }],
-            "returnId": "$service.resource.returns"
+            "returns": {
+              "id": "$service.resource.returns",
+              "type": [{ "name": "anydata", "builtin": true }, { "name": "Response" }, { "name": "error", "builtin": true }],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] },
+              "annotations": ["$cache"]
+            }
           }
         ]
       }

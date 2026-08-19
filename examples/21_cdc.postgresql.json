@@ -51,8 +51,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onRead.returns"
+            "returns": { "id": "$service.onRead.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onCreate",
@@ -77,8 +76,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onCreate.returns"
+            "returns": { "id": "$service.onCreate.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onUpdate",
@@ -111,8 +109,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onUpdate.returns"
+            "returns": { "id": "$service.onUpdate.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onDelete",
@@ -137,8 +134,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onDelete.returns"
+            "returns": { "id": "$service.onDelete.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onTruncate",
@@ -155,8 +151,7 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$service.onTruncate.returns"
+            "returns": { "id": "$service.onTruncate.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           },
           {
             "id": "$service.onError",
@@ -176,8 +171,7 @@
                 "presence": "required"
               }
             ],
-            "returns": { "name": "()", "builtin": true },
-            "returnId": "$service.onError.returns"
+            "returns": { "id": "$service.onError.returns", "type": { "name": "()", "builtin": true } }
           }
         ]
       },

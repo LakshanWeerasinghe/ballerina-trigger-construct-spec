@@ -251,11 +251,6 @@
             "properties": { "name": { "const": "*" } },
             "not": { "required": ["presence"] }
           }
-        },
-        {
-          "if": { "required": ["returns"] },
-          "then": { "description": "A return type present gets its own hierarchical id.", "required": ["returnId"] },
-          "else": { "not": { "required": ["returnId"] } }
         }
       ],
       "properties": {
@@ -278,15 +273,13 @@
         },
         "presence": { "$ref": "#/$defs/presence" },
         "annotations": { "description": "Annotation ids with attachPoint function.", "$ref": "#/$defs/idList" },
-        "returnAnnotations": { "description": "Annotation ids with attachPoint return.", "$ref": "#/$defs/idList" },
         "params": {
           "description": "Order is meaningful. A param that must come first is listed first.",
           "type": "array",
           "minItems": 1,
           "items": { "$ref": "#/$defs/param" }
         },
-        "returns": { "$ref": "#/$defs/typeRefOrUnion" },
-        "returnId": { "description": "Hierarchical: this handler's id plus the fixed segment returns, for example $service.onMessage.returns. Required exactly when returns is present.", "$ref": "#/$defs/id" },
+        "returns": { "$ref": "#/$defs/returnSpec" },
         "accessor": {
           "description": "Resource kind only. The accessor in resource function <accessor> <path>().",
           "$ref": "#/$defs/valueSpec"
@@ -334,6 +327,21 @@
       },
       "if": { "not": { "properties": { "addMode": { "const": "many" } }, "required": ["addMode"] } },
       "then": { "description": "A fixed slot must carry its name, otherwise each generator invents one.", "required": ["name"] }
+    },
+    "returnSpec": {
+      "description": "A handler's return type, grouped like a param since it can carry the same id/dataBinding/annotations facts. No name or presence, a return has neither.",
+      "type": "object",
+      "required": ["id", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "description": "Hierarchical: the owning handler's id plus the fixed segment returns, for example $service.onMessage.returns.", "$ref": "#/$defs/id" },
+        "type": { "$ref": "#/$defs/typeRefOrUnion" },
+        "dataBinding": {
+          "description": "Present only when one union member is a user declared subtype the runtime serializes out, such as a resource returning anydata. Same shape as a param's dataBinding, direction reversed: outbound instead of inbound.",
+          "$ref": "#/$defs/dataBinding"
+        },
+        "annotations": { "description": "Annotation ids with attachPoint return.", "$ref": "#/$defs/idList" }
+      }
     },
     "annotation": {
       "description": "attachPoint decides which construct field holds the reference to this id.",

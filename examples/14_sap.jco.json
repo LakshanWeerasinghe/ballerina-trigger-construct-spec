@@ -55,9 +55,19 @@
             "kind": "remote",
             "doc": "Invoked for each inbound IDoc dispatched to this server from the SAP system.",
             "presence": "required",
-            "params": [{ "id": "$idocService.onReceive.iDoc", "name": "iDoc", "doc": "The received IDoc, as XML.", "type": { "name": "xml", "builtin": true }, "presence": "required" }],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$idocService.onReceive.returns"
+            "params": [
+              {
+                "id": "$idocService.onReceive.iDoc",
+                "name": "iDoc",
+                "doc": "The received IDoc, as XML.",
+                "type": { "name": "xml", "builtin": true },
+                "presence": "required"
+              }
+            ],
+            "returns": {
+              "id": "$idocService.onReceive.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           },
           {
             "id": "$idocService.onError",
@@ -74,8 +84,10 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$idocService.onError.returns"
+            "returns": {
+              "id": "$idocService.onError.returns",
+              "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
+            }
           }
         ]
       }
@@ -111,8 +123,15 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "RfcRecord" }, { "name": "xml", "builtin": true }, { "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$rfcService.onCall.returns"
+            "returns": {
+              "id": "$rfcService.onCall.returns",
+              "type": [
+                { "name": "RfcRecord" },
+                { "name": "xml", "builtin": true },
+                { "name": "error", "builtin": true },
+                { "name": "()", "builtin": true }
+              ]
+            }
           },
           {
             "id": "$rfcService.onError",
@@ -129,8 +148,7 @@
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
-            "returnId": "$rfcService.onError.returns"
+            "returns": { "id": "$rfcService.onError.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
           }
         ]
       }

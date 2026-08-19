@@ -47,8 +47,11 @@
                 "addMode": "many"
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
-            "returnId": "$service.tool.returns"
+            "returns": {
+              "id": "$service.tool.returns",
+              "type": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           }
         ]
       }
@@ -125,8 +128,11 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
-            "returnId": "$streamableHttpService.tool.returns"
+            "returns": {
+              "id": "$streamableHttpService.tool.returns",
+              "type": [{ "name": "anydata", "builtin": true }, { "name": "error", "builtin": true }],
+              "dataBinding": { "typedescs": [{ "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
+            }
           }
         ]
       }
@@ -178,8 +184,10 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "ListToolsResult" }, { "name": "ServerError" }],
-            "returnId": "$streamableHttpAdvancedService.onListTools.returns"
+            "returns": {
+              "id": "$streamableHttpAdvancedService.onListTools.returns",
+              "type": [{ "name": "ListToolsResult" }, { "name": "ServerError" }]
+            }
           },
           {
             "id": "$streamableHttpAdvancedService.onCallTool",
@@ -231,8 +239,10 @@
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "CallToolResult" }, { "name": "ServerError" }],
-            "returnId": "$streamableHttpAdvancedService.onCallTool.returns"
+            "returns": {
+              "id": "$streamableHttpAdvancedService.onCallTool.returns",
+              "type": [{ "name": "CallToolResult" }, { "name": "ServerError" }]
+            }
           }
         ]
       }
