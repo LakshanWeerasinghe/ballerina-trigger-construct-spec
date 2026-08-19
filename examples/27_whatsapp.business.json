@@ -242,16 +242,16 @@
           "rule": "structure.atLeastOne",
           "message": "A WhatsAppService must declare at least one of the ten webhook field handlers, otherwise nothing is ever dispatched. onError alone does not count.",
           "subjects": [
-            { "kind": "handler", "name": "onMessages" },
-            { "kind": "handler", "name": "onAccountReviewUpdate" },
-            { "kind": "handler", "name": "onAccountUpdate" },
-            { "kind": "handler", "name": "onBusinessCapabilityUpdate" },
-            { "kind": "handler", "name": "onMessageTemplateQualityUpdate" },
-            { "kind": "handler", "name": "onMessageTemplateStatusUpdate" },
-            { "kind": "handler", "name": "onPhoneNumberNameUpdate" },
-            { "kind": "handler", "name": "onPhoneNumberQualityUpdate" },
-            { "kind": "handler", "name": "onSecurity" },
-            { "kind": "handler", "name": "onTemplateCategoryUpdate" }
+            { "kind": "handler", "id": "$service.onMessages" },
+            { "kind": "handler", "id": "$service.onAccountReviewUpdate" },
+            { "kind": "handler", "id": "$service.onAccountUpdate" },
+            { "kind": "handler", "id": "$service.onBusinessCapabilityUpdate" },
+            { "kind": "handler", "id": "$service.onMessageTemplateQualityUpdate" },
+            { "kind": "handler", "id": "$service.onMessageTemplateStatusUpdate" },
+            { "kind": "handler", "id": "$service.onPhoneNumberNameUpdate" },
+            { "kind": "handler", "id": "$service.onPhoneNumberQualityUpdate" },
+            { "kind": "handler", "id": "$service.onSecurity" },
+            { "kind": "handler", "id": "$service.onTemplateCategoryUpdate" }
           ]
         }
       ]

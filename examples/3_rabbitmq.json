@@ -137,7 +137,7 @@
           "message": "A RabbitMQ consumer needs its queue name from exactly one source: @rabbitmq:ServiceConfig { queueName } or the service identifier.",
           "subjects": [
             { "kind": "annotationField", "annotation": "$serviceConfig", "path": ["queueName"], "role": "fromAnnotation" },
-            { "kind": "identifier", "role": "fromIdentifier" }
+            { "kind": "identifier" }
           ],
           "prefer": "fromAnnotation"
         },
@@ -145,7 +145,7 @@
           "id": "$messageHandlerChoice",
           "rule": "structure.exactlyOne",
           "message": "A RabbitMQ service must implement exactly one of onMessage or onRequest.",
-          "subjects": [{ "kind": "handler", "name": "onMessage" }, { "kind": "handler", "name": "onRequest" }]
+          "subjects": [{ "kind": "handler", "id": "$service.onMessage" }, { "kind": "handler", "id": "$service.onRequest" }]
         }
       ]
     }

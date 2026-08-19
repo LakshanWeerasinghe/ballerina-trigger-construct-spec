@@ -233,14 +233,14 @@
           "rule": "structure.atLeastOne",
           "message": "A ChatService must declare at least one event handler, otherwise Google Chat interaction events are received and silently dropped.",
           "subjects": [
-            { "kind": "handler", "name": "onMessage" },
-            { "kind": "handler", "name": "onAddedToSpace" },
-            { "kind": "handler", "name": "onRemovedFromSpace" },
-            { "kind": "handler", "name": "onCardClicked" },
-            { "kind": "handler", "name": "onWidgetUpdated" },
-            { "kind": "handler", "name": "onAppCommand" },
-            { "kind": "handler", "name": "onAppHome" },
-            { "kind": "handler", "name": "onSubmitForm" }
+            { "kind": "handler", "id": "$service.onMessage" },
+            { "kind": "handler", "id": "$service.onAddedToSpace" },
+            { "kind": "handler", "id": "$service.onRemovedFromSpace" },
+            { "kind": "handler", "id": "$service.onCardClicked" },
+            { "kind": "handler", "id": "$service.onWidgetUpdated" },
+            { "kind": "handler", "id": "$service.onAppCommand" },
+            { "kind": "handler", "id": "$service.onAppHome" },
+            { "kind": "handler", "id": "$service.onSubmitForm" }
           ]
         }
       ]

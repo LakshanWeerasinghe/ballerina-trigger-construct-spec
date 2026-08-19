@@ -205,15 +205,15 @@
           "rule": "structure.atLeastOne",
           "message": "A TelegramService needs at least one of the nine update handlers; one with none of them receives nothing and does nothing.",
           "subjects": [
-            { "kind": "handler", "name": "onMessage" },
-            { "kind": "handler", "name": "onEditedMessage" },
-            { "kind": "handler", "name": "onChannelPost" },
-            { "kind": "handler", "name": "onEditedChannelPost" },
-            { "kind": "handler", "name": "onCallbackQuery" },
-            { "kind": "handler", "name": "onInlineQuery" },
-            { "kind": "handler", "name": "onPoll" },
-            { "kind": "handler", "name": "onPreCheckoutQuery" },
-            { "kind": "handler", "name": "onShippingQuery" }
+            { "kind": "handler", "id": "$service.onMessage" },
+            { "kind": "handler", "id": "$service.onEditedMessage" },
+            { "kind": "handler", "id": "$service.onChannelPost" },
+            { "kind": "handler", "id": "$service.onEditedChannelPost" },
+            { "kind": "handler", "id": "$service.onCallbackQuery" },
+            { "kind": "handler", "id": "$service.onInlineQuery" },
+            { "kind": "handler", "id": "$service.onPoll" },
+            { "kind": "handler", "id": "$service.onPreCheckoutQuery" },
+            { "kind": "handler", "id": "$service.onShippingQuery" }
           ]
         }
       ]

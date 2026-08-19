@@ -104,7 +104,15 @@
             }
           }
         ]
-      }
+      },
+      "rules": [
+        {
+          "id": "$atLeastOneQueryField",
+          "rule": "structure.atLeastOne",
+          "message": "A GraphQL service must expose at least one query field; a schema with no queries is invalid.",
+          "subjects": [{ "kind": "handler", "id": "$service.query" }]
+        }
+      ]
     }
   ],
 

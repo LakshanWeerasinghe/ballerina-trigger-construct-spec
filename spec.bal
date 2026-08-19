@@ -325,11 +325,11 @@ public type IdentifierSubject record {|
 # An annotation as a whole, its presence, not any field inside it.
 #
 # + kind - Discriminator for this subject shape
-# + name - Id into `TriggerModel.annotations`
+# + id - Id into `TriggerModel.annotations`
 public type AnnotationSubject record {|
     *SubjectBase;
     "annotation" kind;
-    string name;
+    string id;
 |};
 
 # One field inside an annotation's value.
@@ -345,26 +345,29 @@ public type AnnotationFieldSubject record {|
     string[] path;
 |};
 
-# A handler function.
+# A handler function, addressed by its `HandlerOption.id` rather than its `name`: a `subset`-mode
+# option's `name` is a fixed method name, but an `addMode: "many"` option's `name` is always `"*"`,
+# indistinguishable from any other `many` option on the same service type. `id` addresses either
+# case uniformly.
 #
 # + kind - Discriminator for this subject shape
-# + name - One of the service type's `HandlerOption.name` values
+# + id - The handler option's id
 public type HandlerSubject record {|
     *SubjectBase;
     "handler" kind;
-    string name;
+    string id;
 |};
 
-# One parameter of a handler function.
+# One parameter of a handler function, addressed by the `Param`'s own id rather than a
+# handler-name/param-name pair, for the same reason as `HandlerSubject`: the enclosing handler's
+# `name` is not unique under `addMode: "many"`, but the param's own id is.
 #
 # + kind - Discriminator for this subject shape
-# + handler - The enclosing handler's name
-# + name - The parameter's `Param.name`
+# + id - The param's id
 public type ParamSubject record {|
     *SubjectBase;
     "param" kind;
-    string handler;
-    string name;
+    string id;
 |};
 
 # What a `Rule` constrains. A tagged union discriminated by `kind`. A consumer that does not

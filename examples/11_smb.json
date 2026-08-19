@@ -294,12 +294,12 @@
           "rule": "structure.atLeastOne",
           "message": "An SMB service must declare at least one onFile* handler or onFileDelete, otherwise nothing is ever dispatched. onError alone does not count.",
           "subjects": [
-            { "kind": "handler", "name": "onFileText" },
-            { "kind": "handler", "name": "onFileJson" },
-            { "kind": "handler", "name": "onFileXml" },
-            { "kind": "handler", "name": "onFileCsv" },
-            { "kind": "handler", "name": "onFile" },
-            { "kind": "handler", "name": "onFileDelete" }
+            { "kind": "handler", "id": "$service.onFileText" },
+            { "kind": "handler", "id": "$service.onFileJson" },
+            { "kind": "handler", "id": "$service.onFileXml" },
+            { "kind": "handler", "id": "$service.onFileCsv" },
+            { "kind": "handler", "id": "$service.onFile" },
+            { "kind": "handler", "id": "$service.onFileDelete" }
           ]
         },
         {
@@ -308,7 +308,7 @@
           "message": "An SMB service needs its watched path from exactly one source: @smb:ServiceConfig { path } or the service identifier.",
           "subjects": [
             { "kind": "annotationField", "annotation": "$serviceConfig", "path": ["path"], "role": "fromAnnotation" },
-            { "kind": "identifier", "role": "fromIdentifier" }
+            { "kind": "identifier" }
           ],
           "prefer": "fromAnnotation"
         }

@@ -259,11 +259,11 @@
           "rule": "structure.atLeastOne",
           "message": "An Azure Files service must declare at least one file handler. onError alone never receives a file, so the service would do nothing.",
           "subjects": [
-            { "kind": "handler", "name": "onFileText" },
-            { "kind": "handler", "name": "onFileJson" },
-            { "kind": "handler", "name": "onFileXml" },
-            { "kind": "handler", "name": "onFileCsv" },
-            { "kind": "handler", "name": "onFile" }
+            { "kind": "handler", "id": "$service.onFileText" },
+            { "kind": "handler", "id": "$service.onFileJson" },
+            { "kind": "handler", "id": "$service.onFileXml" },
+            { "kind": "handler", "id": "$service.onFileCsv" },
+            { "kind": "handler", "id": "$service.onFile" }
           ]
         }
       ]

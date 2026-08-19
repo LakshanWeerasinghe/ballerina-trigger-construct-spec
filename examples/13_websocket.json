@@ -367,13 +367,13 @@
           "id": "$textMessageVsGeneric",
           "rule": "structure.atMostOne",
           "message": "onMessage and onTextMessage cannot coexist, onMessage already receives text frames.",
-          "subjects": [{ "kind": "handler", "name": "onMessage" }, { "kind": "handler", "name": "onTextMessage" }]
+          "subjects": [{ "kind": "handler", "id": "$service.onMessage" }, { "kind": "handler", "id": "$service.onTextMessage" }]
         },
         {
           "id": "$binaryMessageVsGeneric",
           "rule": "structure.atMostOne",
           "message": "onMessage and onBinaryMessage cannot coexist, onMessage already receives binary frames.",
-          "subjects": [{ "kind": "handler", "name": "onMessage" }, { "kind": "handler", "name": "onBinaryMessage" }]
+          "subjects": [{ "kind": "handler", "id": "$service.onMessage" }, { "kind": "handler", "id": "$service.onBinaryMessage" }]
         }
       ]
     }

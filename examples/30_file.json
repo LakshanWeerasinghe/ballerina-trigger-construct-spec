@@ -78,9 +78,9 @@
           "rule": "structure.atLeastOne",
           "message": "A Local Files service must declare at least one of onCreate, onModify, or onDelete, otherwise no event is ever dispatched. This connector has no onError handler to mistake for one.",
           "subjects": [
-            { "kind": "handler", "name": "onCreate" },
-            { "kind": "handler", "name": "onModify" },
-            { "kind": "handler", "name": "onDelete" }
+            { "kind": "handler", "id": "$service.onCreate" },
+            { "kind": "handler", "id": "$service.onModify" },
+            { "kind": "handler", "id": "$service.onDelete" }
           ]
         }
       ]

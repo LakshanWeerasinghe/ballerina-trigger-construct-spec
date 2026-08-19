@@ -388,11 +388,11 @@
         },
         {
           "type": "object",
-          "required": ["kind", "name"],
+          "required": ["kind", "id"],
           "additionalProperties": false,
           "properties": {
             "kind": { "const": "annotation" },
-            "name": { "$ref": "#/$defs/id" },
+            "id": { "description": "Id into TriggerModel.annotations.", "$ref": "#/$defs/id" },
             "serviceType": { "$ref": "#/$defs/id" },
             "role": { "type": "string" }
           }
@@ -415,24 +415,25 @@
           }
         },
         {
+          "description": "Addresses a handler option by its id, not its name: an addMode: many option's name is always *, indistinguishable from any other many option on the same service type, so only id addresses either case uniformly.",
           "type": "object",
-          "required": ["kind", "name"],
+          "required": ["kind", "id"],
           "additionalProperties": false,
           "properties": {
             "kind": { "const": "handler" },
-            "name": { "description": "A handler name, not an id.", "type": "string", "minLength": 1 },
+            "id": { "$ref": "#/$defs/id" },
             "serviceType": { "$ref": "#/$defs/id" },
             "role": { "type": "string" }
           }
         },
         {
+          "description": "Addresses a param by its own id, not a handler-name/param-name pair, for the same reason as the handler subject.",
           "type": "object",
-          "required": ["kind", "handler", "name"],
+          "required": ["kind", "id"],
           "additionalProperties": false,
           "properties": {
             "kind": { "const": "param" },
-            "handler": { "type": "string", "minLength": 1 },
-            "name": { "type": "string", "minLength": 1 },
+            "id": { "$ref": "#/$defs/id" },
             "serviceType": { "$ref": "#/$defs/id" },
             "role": { "type": "string" }
           }

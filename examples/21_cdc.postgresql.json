@@ -181,11 +181,11 @@
           "rule": "structure.atLeastOne",
           "message": "A CDC service must declare at least one change handler. onError alone never receives a change event, so the service would do nothing.",
           "subjects": [
-            { "kind": "handler", "name": "onRead" },
-            { "kind": "handler", "name": "onCreate" },
-            { "kind": "handler", "name": "onUpdate" },
-            { "kind": "handler", "name": "onDelete" },
-            { "kind": "handler", "name": "onTruncate" }
+            { "kind": "handler", "id": "$service.onRead" },
+            { "kind": "handler", "id": "$service.onCreate" },
+            { "kind": "handler", "id": "$service.onUpdate" },
+            { "kind": "handler", "id": "$service.onDelete" },
+            { "kind": "handler", "id": "$service.onTruncate" }
           ]
         }
       ]

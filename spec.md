@@ -551,7 +551,7 @@ a constraint is a new registry entry, not a schema change.
   "message": "A RabbitMQ consumer needs its queue name from exactly one source: @rabbitmq:ServiceConfig { queueName } or the service identifier.",
   "subjects": [
     { "role": "fromAnnotation", "kind": "annotationField", "annotation": "$serviceConfig", "path": ["queueName"] },
-    { "role": "fromIdentifier", "kind": "identifier" }
+    { "kind": "identifier" }
   ],
   "prefer": "fromAnnotation"
 }
@@ -584,10 +584,10 @@ A tagged union. `kind` discriminates, so a malformed subject is always distingui
 | `kind` | Fields | Addresses |
 |---|---|---|
 | `identifier` | none | The identifier or base path slot. |
-| `annotation` | `name` | An annotation as a whole, its presence rather than a field inside it. |
+| `annotation` | `id` | An annotation as a whole (its `annotations[].id`), its presence rather than a field inside it. |
 | `annotationField` | `annotation`, `path` | One field inside an annotation. `path` is an array, so nested fields such as `["retryConfig", "maxCount"]` are reachable. |
-| `handler` | `name` | A handler function. |
-| `param` | `handler`, `name` | One parameter of a handler. |
+| `handler` | `id` | A handler option, by its `HandlerOption.id`. Section 6.1.1. |
+| `param` | `id` | A parameter, by its `Param.id`. Section 6.1.1. |
 
 Every subject also accepts:
 
@@ -595,6 +595,40 @@ Every subject also accepts:
 |---|---|
 | `serviceType` | Which service type this subject belongs to. Defaults to the enclosing one. Required in a top level rule. |
 | `role` | This subject's name within its rule. Asymmetric constraints fix the names such as `when` and `then`. Symmetric ones use free labels, referenced by `prefer`. |
+
+### 6.1.1 Addressing a `handler` or `param` subject by id
+
+Both address the construct's own id, never its `name`. A `subset`-mode handler's `name` is a fixed
+method name and would work, but an `addMode: "many"` option's `name` is always `"*"`,
+indistinguishable from any other `many` option on the same service type. Rather than support two
+addressing schemes depending on `addMode`, both subject kinds always use `id`. The same reasoning
+carries to `param`: a `many`-mode param's enclosing handler can itself be a `many` option, so a
+`handler`/`name` pair would inherit the same ambiguity; the param's own hierarchical id (section 0)
+never does.
+
+GraphQL is the worked case: a schema is invalid without at least one query field, so `$service.query`
+needs an `atLeastOne` constraint, but `name: "*"` would also match `$service.mutation` and
+`$service.subscription`:
+
+```json
+{
+  "id": "$atLeastOneQueryField",
+  "rule": "structure.atLeastOne",
+  "message": "A GraphQL service must expose at least one query field.",
+  "subjects": [{ "kind": "handler", "id": "$service.query" }]
+}
+```
+
+A single subject is a legal `structure.atLeastOne` (section 6.2): for a `many` option, "present"
+means "instantiated one or more times" rather than "declared or not," so the constraint still reads
+naturally with only one member in the set.
+
+`param`'s `id` follows the same rule, addressing `Param.id` directly instead of a
+`handler`/`name` pair:
+
+```json
+{ "role": "when", "kind": "param", "id": "$service.onMessage.batchSize" }
+```
 
 ### 6.2 Constraint registry
 
@@ -618,7 +652,7 @@ Asymmetric constraints use `role` instead of positional members:
   "severity": "warning",
   "message": "batchSize has no effect unless mode is \"batch\".",
   "subjects": [
-    { "role": "when", "kind": "param", "handler": "onMessage", "name": "batchSize" },
+    { "role": "when", "kind": "param", "id": "$service.onMessage.batchSize" },
     { "role": "then", "kind": "annotationField", "annotation": "$serviceConfig", "path": ["mode"] }
   ]
 }
