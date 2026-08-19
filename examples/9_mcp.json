@@ -3,9 +3,18 @@
 
   "listeners": [
     {
-      "id": "$listener",
-      "doc": "MCP listener that serves the tool catalogue and dispatches each tool call to the matching method, over stdio or streamable HTTP depending on which service type is attached.",
+      "id": "$listener1",
+      "doc": "MCP listener over the Streamable HTTP transport, wrapping an http:Listener and dispatching each tool call to the matching method.",
       "type": { "name": "StreamableHttpListener" },
+      "services": ["$service", "$advancedService", "$streamableHttpService", "$streamableHttpAdvancedService"],
+      "multipleServicesAllowed": true,
+      "multipleServicesOfSameTypeAllowed": true
+    },
+    {
+      "id": "$listener2",
+      "doc": "Renamed to make the transport explicit. Delegates every call to an internal StreamableHttpListener, so it accepts and dispatches the same service types the same way.",
+      "deprecated": "Renamed to make the transport explicit. Use mcp:StreamableHttpListener instead.",
+      "type": { "name": "Listener" },
       "services": ["$service", "$advancedService", "$streamableHttpService", "$streamableHttpAdvancedService"],
       "multipleServicesAllowed": true,
       "multipleServicesOfSameTypeAllowed": true
