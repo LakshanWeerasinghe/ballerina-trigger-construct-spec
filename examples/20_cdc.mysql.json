@@ -7,7 +7,13 @@
       "doc": "Streams row-level changes from the MySQL binary log and dispatches each captured event to the attached service.",
       "type": { "name": "CdcListener" },
       "services": ["$service"],
-      "multipleServicesAllowed": true
+      "multipleServicesAllowed": true,
+      "requiredImports": [
+        {
+          "importType": "driver",
+          "packageInfo": { "org": "ballerinax", "packageName": "mysql.cdc.driver", "moduleName": "mysql.cdc.driver", "version": "1.1.0" }
+        }
+      ]
     }
   ],
 

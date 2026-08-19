@@ -11,7 +11,7 @@
       "requiredImports": [
         {
           "importType": "driver",
-          "packageInfo": { "org": "ballerinax", "packageName": "postgresql.cdc.driver", "moduleName": "postgresql.cdc.driver", "version": "1.0.0" }
+          "packageInfo": { "org": "ballerinax", "packageName": "postgresql.cdc.driver", "moduleName": "postgresql.cdc.driver", "version": "1.1.0" }
         }
       ]
     }
@@ -46,9 +46,9 @@
               {
                 "id": "$service.onRead.tableName",
                 "name": "tableName",
-                "doc": "Name of the table the row came from, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
+                "doc": "Name of the table the row came from, useful when one service handles several tables.",
                 "type": { "name": "string", "builtin": true },
-                "presence": "optional"
+                "presence": "required"
               }
             ],
             "returns": { "id": "$service.onRead.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
@@ -71,9 +71,9 @@
               {
                 "id": "$service.onCreate.tableName",
                 "name": "tableName",
-                "doc": "Name of the table the change occurred in, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
+                "doc": "Name of the table the change occurred in.",
                 "type": { "name": "string", "builtin": true },
-                "presence": "optional"
+                "presence": "required"
               }
             ],
             "returns": { "id": "$service.onCreate.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
@@ -104,9 +104,9 @@
               {
                 "id": "$service.onUpdate.tableName",
                 "name": "tableName",
-                "doc": "Name of the table the change occurred in, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
+                "doc": "Name of the table the change occurred in.",
                 "type": { "name": "string", "builtin": true },
-                "presence": "optional"
+                "presence": "required"
               }
             ],
             "returns": { "id": "$service.onUpdate.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
@@ -129,9 +129,9 @@
               {
                 "id": "$service.onDelete.tableName",
                 "name": "tableName",
-                "doc": "Name of the table the change occurred in, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
+                "doc": "Name of the table the change occurred in.",
                 "type": { "name": "string", "builtin": true },
-                "presence": "optional"
+                "presence": "required"
               }
             ],
             "returns": { "id": "$service.onDelete.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
@@ -146,9 +146,9 @@
               {
                 "id": "$service.onTruncate.tableName",
                 "name": "tableName",
-                "doc": "Name of the table that was truncated, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
+                "doc": "Name of the table that was truncated.",
                 "type": { "name": "string", "builtin": true },
-                "presence": "optional"
+                "presence": "required"
               }
             ],
             "returns": { "id": "$service.onTruncate.returns", "type": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
