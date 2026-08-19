@@ -1,0 +1,205 @@
+{
+  "version": "v1.0",
+
+  "listeners": [
+    { "type": { "name": "Listener" }, "services": ["$service"], "multipleServicesAllowed": false }
+  ],
+
+  "serviceTypes": [
+    {
+      "id": "$service",
+      "type": { "name": "ChatService" },
+      "concrete": false,
+      "multipleListenersAllowed": true,
+      "annotations": ["$serviceConfig"],
+      "handlers": {
+        "backedByConcreteType": false,
+        "options": [
+          {
+            "name": "onMessage",
+            "kind": "remote",
+            "doc": "Invoked when a user sends a message to the app, @mentions it in a space, or invokes a slash command routed as a message.",
+            "presence": "optional",
+            "params": [
+              {
+                "name": "event",
+                "doc": "The Chat interaction event. Declare MessageEvent instead of ChatEvent for compile-time assurance that message is present, avoiding nil-check operators on access.",
+                "type": [{ "name": "MessageEvent" }, { "name": "ChatEvent" }],
+                "presence": "required"
+              },
+              {
+                "name": "caller",
+                "doc": "Caller for responding synchronously via respond(), and for async follow-up Chat API calls (sendMessage, updateMessage, deleteMessage, getSpace), pre-configured with the event's space context.",
+                "type": { "name": "MessageCaller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": [{ "name": "error" }, { "name": "()" }]
+          },
+          {
+            "name": "onAddedToSpace",
+            "kind": "remote",
+            "doc": "Invoked when the Chat app is added to a space (a room, group chat, or direct message).",
+            "presence": "optional",
+            "params": [
+              {
+                "name": "event",
+                "doc": "The Chat interaction event.",
+                "type": { "name": "ChatEvent" },
+                "presence": "required"
+              },
+              {
+                "name": "caller",
+                "doc": "Caller for responding synchronously via respond(), and for async follow-up Chat API calls (sendMessage, updateMessage, deleteMessage, getSpace), pre-configured with the event's space context.",
+                "type": { "name": "MessageCaller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": [{ "name": "error" }, { "name": "()" }]
+          },
+          {
+            "name": "onRemovedFromSpace",
+            "kind": "remote",
+            "doc": "Invoked when the Chat app is removed from a space. There is no caller for this event, the app cannot send a response since it has already been removed.",
+            "presence": "optional",
+            "params": [
+              {
+                "name": "event",
+                "doc": "The Chat interaction event.",
+                "type": { "name": "ChatEvent" },
+                "presence": "required"
+              }
+            ],
+            "returns": [{ "name": "error" }, { "name": "()" }]
+          },
+          {
+            "name": "onCardClicked",
+            "kind": "remote",
+            "doc": "Invoked when a user clicks a button or other interactive element on a message card or an app-home card.",
+            "presence": "optional",
+            "params": [
+              {
+                "name": "event",
+                "doc": "The Chat interaction event.",
+                "type": { "name": "ChatEvent" },
+                "presence": "required"
+              },
+              {
+                "name": "caller",
+                "doc": "Caller for responding with a Message (dialogs, card updates, link previews) or a Card (app-home interactions, auto-wrapped for navigation), pre-configured with the event's space context. Also exposes async follow-up Chat API calls (sendMessage, updateMessage, deleteMessage, getSpace).",
+                "type": { "name": "CardClickedCaller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": [{ "name": "error" }, { "name": "()" }]
+          },
+          {
+            "name": "onWidgetUpdated",
+            "kind": "remote",
+            "doc": "Invoked when a widget, such as a text input, requests autocomplete suggestions or another update while the user is still interacting with it.",
+            "presence": "optional",
+            "params": [
+              {
+                "name": "event",
+                "doc": "The Chat interaction event.",
+                "type": { "name": "ChatEvent" },
+                "presence": "required"
+              },
+              {
+                "name": "caller",
+                "doc": "Caller for responding synchronously with the widget update result, typically autocomplete suggestions.",
+                "type": { "name": "WidgetUpdatedCaller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": [{ "name": "error" }, { "name": "()" }]
+          },
+          {
+            "name": "onAppCommand",
+            "kind": "remote",
+            "doc": "Invoked when a user invokes a Chat app command (a slash command or a quick command).",
+            "presence": "optional",
+            "params": [
+              {
+                "name": "event",
+                "doc": "The Chat interaction event.",
+                "type": { "name": "ChatEvent" },
+                "presence": "required"
+              },
+              {
+                "name": "caller",
+                "doc": "Caller for responding synchronously via respond(), and for async follow-up Chat API calls (sendMessage, updateMessage, deleteMessage, getSpace), pre-configured with the event's space context.",
+                "type": { "name": "MessageCaller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": [{ "name": "error" }, { "name": "()" }]
+          },
+          {
+            "name": "onAppHome",
+            "kind": "remote",
+            "doc": "Invoked when a user opens the app's home page tab.",
+            "presence": "optional",
+            "params": [
+              {
+                "name": "event",
+                "doc": "The Chat interaction event.",
+                "type": { "name": "ChatEvent" },
+                "presence": "required"
+              },
+              {
+                "name": "caller",
+                "doc": "Caller for responding with the Card to display. It is automatically wrapped in the RenderActions/pushCard structure the app-home tab expects.",
+                "type": { "name": "AppHomeCaller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": [{ "name": "error" }, { "name": "()" }]
+          },
+          {
+            "name": "onSubmitForm",
+            "kind": "remote",
+            "doc": "Invoked when a user submits a dialog or a form from the app home.",
+            "presence": "optional",
+            "params": [
+              {
+                "name": "event",
+                "doc": "The Chat interaction event.",
+                "type": { "name": "ChatEvent" },
+                "presence": "required"
+              },
+              {
+                "name": "caller",
+                "doc": "Caller for responding with the updated Card for the app home. It is automatically wrapped in the RenderActions/updateCard structure the app-home tab expects.",
+                "type": { "name": "SubmitFormCaller" },
+                "presence": "optional"
+              }
+            ],
+            "returns": [{ "name": "error" }, { "name": "()" }]
+          }
+        ]
+      },
+      "rules": [
+        {
+          "id": "$atLeastOneEventHandler",
+          "rule": "structure.atLeastOne",
+          "message": "A ChatService must declare at least one event handler, otherwise Google Chat interaction events are received and silently dropped.",
+          "subjects": [
+            { "kind": "handler", "name": "onMessage" },
+            { "kind": "handler", "name": "onAddedToSpace" },
+            { "kind": "handler", "name": "onRemovedFromSpace" },
+            { "kind": "handler", "name": "onCardClicked" },
+            { "kind": "handler", "name": "onWidgetUpdated" },
+            { "kind": "handler", "name": "onAppCommand" },
+            { "kind": "handler", "name": "onAppHome" },
+            { "kind": "handler", "name": "onSubmitForm" }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "annotations": [
+    { "id": "$serviceConfig", "type": { "name": "ServiceConfiguration" }, "attachPoint": "service", "presence": "required" }
+  ]
+}

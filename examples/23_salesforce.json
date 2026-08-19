@@ -1,0 +1,31 @@
+{
+  "version": "v1.0",
+
+  "listeners": [
+    {
+      "type": { "name": "Listener" },
+      "services": ["$cdcService", "$platformEventsService"],
+      "multipleServicesAllowed": true,
+      "multipleServicesOfSameTypeAllowed": true
+    }
+  ],
+
+  "serviceTypes": [
+    {
+      "id": "$cdcService",
+      "type": { "name": "CdcService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "identifier": { "presence": "required", "form": ["stringLiteral"] },
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$platformEventsService",
+      "type": { "name": "PlatformEventsService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "identifier": { "presence": "required", "form": ["stringLiteral"] },
+      "handlers": { "backedByConcreteType": true }
+    }
+  ]
+}

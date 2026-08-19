@@ -1,0 +1,29 @@
+{
+  "version": "v1.0",
+
+  "listeners": [
+    {
+      "type": { "name": "Listener" },
+      "services": ["$callStatus", "$smsStatus"],
+      "multipleServicesAllowed": true,
+      "multipleServicesOfSameTypeAllowed": false
+    }
+  ],
+
+  "serviceTypes": [
+    {
+      "id": "$callStatus",
+      "type": { "name": "CallStatusService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$smsStatus",
+      "type": { "name": "SmsStatusService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    }
+  ]
+}

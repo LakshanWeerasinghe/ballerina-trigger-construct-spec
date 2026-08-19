@@ -1,0 +1,72 @@
+{
+  "version": "v1.0",
+
+  "listeners": [
+    {
+      "type": { "name": "Listener" },
+      "services": [
+        "$company",
+        "$contact",
+        "$conversation",
+        "$deal",
+        "$ticket",
+        "$product",
+        "$lineItem"
+      ],
+      "multipleServicesAllowed": true,
+      "multipleServicesOfSameTypeAllowed": false
+    }
+  ],
+
+  "serviceTypes": [
+    {
+      "id": "$company",
+      "type": { "name": "CompanyService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$contact",
+      "type": { "name": "ContactService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$conversation",
+      "type": { "name": "ConversationService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$deal",
+      "type": { "name": "DealService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$ticket",
+      "type": { "name": "TicketService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$product",
+      "type": { "name": "ProductService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$lineItem",
+      "type": { "name": "LineItemService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    }
+  ]
+}

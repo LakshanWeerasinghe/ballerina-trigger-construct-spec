@@ -1,0 +1,43 @@
+{
+  "version": "v1.0",
+
+  "listeners": [
+    {
+      "type": { "name": "Listener" },
+      "services": ["$orders", "$customers", "$products", "$fulfillments"],
+      "multipleServicesAllowed": true,
+      "multipleServicesOfSameTypeAllowed": false
+    }
+  ],
+
+  "serviceTypes": [
+    {
+      "id": "$orders",
+      "type": { "name": "OrdersService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$customers",
+      "type": { "name": "CustomersService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$products",
+      "type": { "name": "ProductsService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    },
+    {
+      "id": "$fulfillments",
+      "type": { "name": "FulfillmentsService" },
+      "concrete": true,
+      "multipleListenersAllowed": true,
+      "handlers": { "backedByConcreteType": true }
+    }
+  ]
+}
