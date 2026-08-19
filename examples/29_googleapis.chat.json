@@ -2,12 +2,19 @@
   "version": "v1.0",
 
   "listeners": [
-    { "type": { "name": "Listener" }, "services": ["$service"], "multipleServicesAllowed": false }
+    {
+      "id": "$listener",
+      "doc": "Webhook listener that dispatches each inbound Google Chat interaction event to the attached service.",
+      "type": { "name": "Listener" },
+      "services": ["$service"],
+      "multipleServicesAllowed": false
+    }
   ],
 
   "serviceTypes": [
     {
       "id": "$service",
+      "doc": "Receives Google Chat app interaction events: messages, space membership changes, card clicks, widget updates, commands, and form submissions.",
       "type": { "name": "ChatService" },
       "concrete": false,
       "multipleListenersAllowed": true,
@@ -16,166 +23,197 @@
         "backedByConcreteType": false,
         "options": [
           {
+            "id": "$service.onMessage",
             "name": "onMessage",
             "kind": "remote",
             "doc": "Invoked when a user sends a message to the app, @mentions it in a space, or invokes a slash command routed as a message.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onMessage.event",
                 "name": "event",
                 "doc": "The Chat interaction event. Declare MessageEvent instead of ChatEvent for compile-time assurance that message is present, avoiding nil-check operators on access.",
                 "type": [{ "name": "MessageEvent" }, { "name": "ChatEvent" }],
                 "presence": "required"
               },
               {
+                "id": "$service.onMessage.caller",
                 "name": "caller",
                 "doc": "Caller for responding synchronously via respond(), and for async follow-up Chat API calls (sendMessage, updateMessage, deleteMessage, getSpace), pre-configured with the event's space context.",
                 "type": { "name": "MessageCaller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onMessage.returns"
           },
           {
+            "id": "$service.onAddedToSpace",
             "name": "onAddedToSpace",
             "kind": "remote",
             "doc": "Invoked when the Chat app is added to a space (a room, group chat, or direct message).",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onAddedToSpace.event",
                 "name": "event",
                 "doc": "The Chat interaction event.",
                 "type": { "name": "ChatEvent" },
                 "presence": "required"
               },
               {
+                "id": "$service.onAddedToSpace.caller",
                 "name": "caller",
                 "doc": "Caller for responding synchronously via respond(), and for async follow-up Chat API calls (sendMessage, updateMessage, deleteMessage, getSpace), pre-configured with the event's space context.",
                 "type": { "name": "MessageCaller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onAddedToSpace.returns"
           },
           {
+            "id": "$service.onRemovedFromSpace",
             "name": "onRemovedFromSpace",
             "kind": "remote",
             "doc": "Invoked when the Chat app is removed from a space. There is no caller for this event, the app cannot send a response since it has already been removed.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onRemovedFromSpace.event",
                 "name": "event",
                 "doc": "The Chat interaction event.",
                 "type": { "name": "ChatEvent" },
                 "presence": "required"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onRemovedFromSpace.returns"
           },
           {
+            "id": "$service.onCardClicked",
             "name": "onCardClicked",
             "kind": "remote",
             "doc": "Invoked when a user clicks a button or other interactive element on a message card or an app-home card.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onCardClicked.event",
                 "name": "event",
                 "doc": "The Chat interaction event.",
                 "type": { "name": "ChatEvent" },
                 "presence": "required"
               },
               {
+                "id": "$service.onCardClicked.caller",
                 "name": "caller",
                 "doc": "Caller for responding with a Message (dialogs, card updates, link previews) or a Card (app-home interactions, auto-wrapped for navigation), pre-configured with the event's space context. Also exposes async follow-up Chat API calls (sendMessage, updateMessage, deleteMessage, getSpace).",
                 "type": { "name": "CardClickedCaller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onCardClicked.returns"
           },
           {
+            "id": "$service.onWidgetUpdated",
             "name": "onWidgetUpdated",
             "kind": "remote",
             "doc": "Invoked when a widget, such as a text input, requests autocomplete suggestions or another update while the user is still interacting with it.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onWidgetUpdated.event",
                 "name": "event",
                 "doc": "The Chat interaction event.",
                 "type": { "name": "ChatEvent" },
                 "presence": "required"
               },
               {
+                "id": "$service.onWidgetUpdated.caller",
                 "name": "caller",
                 "doc": "Caller for responding synchronously with the widget update result, typically autocomplete suggestions.",
                 "type": { "name": "WidgetUpdatedCaller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onWidgetUpdated.returns"
           },
           {
+            "id": "$service.onAppCommand",
             "name": "onAppCommand",
             "kind": "remote",
             "doc": "Invoked when a user invokes a Chat app command (a slash command or a quick command).",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onAppCommand.event",
                 "name": "event",
                 "doc": "The Chat interaction event.",
                 "type": { "name": "ChatEvent" },
                 "presence": "required"
               },
               {
+                "id": "$service.onAppCommand.caller",
                 "name": "caller",
                 "doc": "Caller for responding synchronously via respond(), and for async follow-up Chat API calls (sendMessage, updateMessage, deleteMessage, getSpace), pre-configured with the event's space context.",
                 "type": { "name": "MessageCaller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onAppCommand.returns"
           },
           {
+            "id": "$service.onAppHome",
             "name": "onAppHome",
             "kind": "remote",
             "doc": "Invoked when a user opens the app's home page tab.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onAppHome.event",
                 "name": "event",
                 "doc": "The Chat interaction event.",
                 "type": { "name": "ChatEvent" },
                 "presence": "required"
               },
               {
+                "id": "$service.onAppHome.caller",
                 "name": "caller",
                 "doc": "Caller for responding with the Card to display. It is automatically wrapped in the RenderActions/pushCard structure the app-home tab expects.",
                 "type": { "name": "AppHomeCaller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onAppHome.returns"
           },
           {
+            "id": "$service.onSubmitForm",
             "name": "onSubmitForm",
             "kind": "remote",
             "doc": "Invoked when a user submits a dialog or a form from the app home.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onSubmitForm.event",
                 "name": "event",
                 "doc": "The Chat interaction event.",
                 "type": { "name": "ChatEvent" },
                 "presence": "required"
               },
               {
+                "id": "$service.onSubmitForm.caller",
                 "name": "caller",
                 "doc": "Caller for responding with the updated Card for the app home. It is automatically wrapped in the RenderActions/updateCard structure the app-home tab expects.",
                 "type": { "name": "SubmitFormCaller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onSubmitForm.returns"
           }
         ]
       },

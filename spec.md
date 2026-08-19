@@ -27,8 +27,9 @@ Never an empty array, null, or default placeholder.
 
 ## 0. Ids
 
-Three constructs carry an id: `serviceTypes[]`, `annotations[]`, and `rules[]`. Every id starts
-with `$`, and so does every reference to one.
+Every construct that a file's own contents can point back into carries an id:
+`listeners[]`, `serviceTypes[]`, `handlers.options[]`, `params[]`, a handler's return type,
+`annotations[]`, and `rules[]`. Every id starts with `$`, and so does every reference to one.
 
 ```json
 "id": "$serviceConfig"
@@ -42,7 +43,26 @@ them. `"services": ["$service"]` is clearly a pointer into `serviceTypes[]`.
 Ids are scoped per construct kind and every reference site names the kind it targets, so `$` alone
 is enough. No per kind sigil.
 
-Handler names, parameter names, and `role` labels are not ids and are never prefixed.
+**Flat vs. hierarchical.** `listeners[]`, `annotations[]`, and `rules[]` are flat, top level lists,
+so their ids are single segments: `$serviceConfig`, `$listener`. A handler, its return type, and
+its params nest inside one `serviceTypes[]` entry, so their ids are hierarchical: dot separated
+segments that scope the id under its owner, built by appending the child's own name to the
+parent's id.
+
+```
+$service                    serviceTypes[] entry
+$service.onMessage          handlers.options[] entry on $service
+$service.onMessage.returns  the return type of $service.onMessage
+$service.onMessage.records  a param of $service.onMessage
+```
+
+A handler backed by a concrete type has no `options[]` entry to carry an id at all — its
+methods are introspectable by name, so there is nothing here to reference. Hierarchical ids
+therefore only ever appear under a non concrete service type.
+
+`role` labels (section 6.1) and the handler/param `name` fields are not ids and are never
+prefixed with `$` — `name` is what gets emitted as Ballerina source, `id` is only for
+cross-referencing within this file.
 
 ---
 
@@ -53,13 +73,14 @@ A type reference is a **tree**, never a type expression in a string. A node is e
 
 ```json
 { "name": "Caller" }
-{ "shape": "array", "elementType": { "name": "byte" } }
+{ "shape": "array", "elementType": { "name": "byte", "builtin": true } }
 ```
 
 | Field | Meaning |
 |---|---|
 | `name` | A named type. Mutually exclusive with `shape`. |
 | `packageInfo` | Only alongside `name`, and only for a type from another module. |
+| `builtin` | Only alongside `name`. `true` when `name` is one of Ballerina's own language types. Absent, never `false`, for a module type. Section 1.3. |
 | `shape` | How a constructed type is built. Section 1.1. |
 | `elementType` | The type the shape holds. |
 | `completionType` | `stream` only, and optional. |
@@ -73,7 +94,7 @@ explicit `()` union member rather than a flag, so a union is also how a nilable 
 
 ```json
 "type": [{ "name": "AnydataConsumerRecord" }, { "name": "BytesConsumerRecord" }]
-"returns": [{ "name": "error" }, { "name": "()" }]
+"returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
 ```
 
 ### 1.1 Shapes
@@ -84,9 +105,9 @@ explicit `()` union member rather than a flag, so a union is also how a nilable 
 | `stream` | the value | optional, what the stream terminates with | `stream<T>`, `stream<T, C>` |
 
 ```json
-{ "shape": "array", "elementType": { "name": "byte" } }
-{ "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string" } } }
-{ "shape": "stream", "elementType": { "name": "anydata" }, "completionType": [{ "name": "Error" }, { "name": "()" }] }
+{ "shape": "array", "elementType": { "name": "byte", "builtin": true } }
+{ "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string", "builtin": true } } }
+{ "shape": "stream", "elementType": { "name": "anydata", "builtin": true }, "completionType": [{ "name": "Error" }, { "name": "()", "builtin": true }] }
 ```
 
 which are `byte[]`, `string[][]`, and `stream<anydata, Error?>`.
@@ -116,13 +137,35 @@ decision per leaf rather than string surgery:
 | `TypeRef` | Renders as, when the described module is `grpc` |
 |---|---|
 | `{ "name": "Caller" }` | `grpc:Caller` |
-| `{ "name": "anydata" }` | `anydata`, a language type, never qualified |
-| `{ "streamOf": {"name":"anydata"}, "completion": [{"name":"Error"},{"name":"()"}] }` | `stream<anydata, grpc:Error?>` |
-| `{ "streamOf": {"arrayOf":{"name":"string"}}, "completion": [{"name":"error"},{"name":"()"}] }` | `stream<string[], error?>` |
+| `{ "name": "anydata", "builtin": true }` | `anydata`, a language type, never qualified |
+| `{ "streamOf": {"name":"anydata","builtin":true}, "completion": [{"name":"Error"},{"name":"()","builtin":true}] }` | `stream<anydata, grpc:Error?>` |
+| `{ "streamOf": {"arrayOf":{"name":"string","builtin":true}}, "completion": [{"name":"error","builtin":true},{"name":"()","builtin":true}] }` | `stream<string[], error?>` |
 
-Whether a leaf is a language type or a module type follows from the language's own set of builtin
-names, so it is not restated here. Case is a reliable signal in practice: `Error` is the module's
-error subtype, `error` is the language's.
+Whether a leaf is a language type or a module type decides how a consumer qualifies it, section
+1.2, so it is a fact the consumer needs and `builtin` states it directly rather than leaving it to
+be inferred. Case is a reliable authoring convention in the corpus, `Error` is the module's error
+subtype and `error` is the language's, but a consumer should read `builtin` rather than pattern
+match on casing.
+
+### 1.3 `builtin`
+
+```json
+{ "name": "anydata", "builtin": true }
+{ "name": "error", "builtin": true }
+{ "name": "Error" }
+```
+
+`builtin` is `true` only on Ballerina's own language types: the basic types (`int`, `float`,
+`decimal`, `string`, `boolean`, `byte`), `anydata`, `any`, `error`, `()`, `record {}`, `json`,
+`xml`, `map`, `table`, and similarly. It is absent, never `false`, on every module type, following
+the same leave it out rule as everywhere else in this file.
+
+**Why this is stated rather than left to introspection.** Every other fact in this file earns its
+place by being something introspection cannot recover, section 4 of `README.md`. Ballerina's set of
+language types is technically fixed and could be hardcoded by a consumer, but hardcoding a second
+copy of that set in every consumer, kept in sync by hand as the language adds one, is worse than a
+one bit flag stated once per leaf. So `builtin` is metadata for convenience, not for
+non-introspectability, the one field in this schema justified that way.
 
 ---
 
@@ -130,6 +173,8 @@ error subtype, `error` is the language's.
 
 ```json
 {
+  "id": "$listener",
+  "doc": "Polls the configured broker connection and dispatches each batch to the attached service.",
   "type": { "name": "Listener" },
   "services": ["$service"],
   "multipleServicesAllowed": true,
@@ -142,6 +187,8 @@ error subtype, `error` is the language's.
 
 | Field | Meaning |
 |---|---|
+| `id` | **Required.** Flat, since a listener nests inside nothing. `$listener`, or `$listener1`/`$listener2` when a connector declares more than one. |
+| `doc` | **Required.** What this listener is and when a service attaches to it. Section 5.2 explains why this is required unconditionally rather than only when introspection cannot recover it. |
 | `type` | `TypeRef` for the listener class. |
 | `deprecated` | Optional. Section 5.3. |
 | `services` | `serviceTypes[].id` values this listener can host. |
@@ -209,6 +256,7 @@ knows the Java version of the distribution it targets.
 ```json
 {
   "id": "$service",
+  "doc": "Consumes messages from the subscribed topics/queue and dispatches each poll's batch.",
   "type": { "name": "Service" },
   "concrete": false,
   "multipleListenersAllowed": true,
@@ -220,7 +268,8 @@ knows the Java version of the distribution it targets.
 
 | Field | Meaning |
 |---|---|
-| `id` | Referenced from `listeners[].services` and sibling constructs. |
+| `id` | **Required.** Referenced from `listeners[].services` and sibling constructs. Also the hierarchy root for this type's `handlers.options[]` and their `params[]`, section 0. |
+| `doc` | **Required**, even when `concrete` is `true`. What this service type is for. Unlike handler `doc` (section 5.2), this is required unconditionally: id and doc together are what make every top level construct in the file navigable on its own, not only what introspection cannot recover. |
 | `type` | `TypeRef` for the service object type. |
 | `concrete` | `true` when the type declares its own methods and they can be introspected. `false` for a marker or abstract type. |
 | `multipleListenersAllowed` | Can one service attach to more than one listener at once, as in `service X on l1, l2 {}`? |
@@ -302,18 +351,21 @@ block, so it lives on each option as `addMode`. Section 5.1.
 
 ```json
 {
+  "id": "$service.onConsumerRecord",
   "name": "onConsumerRecord",
   "kind": "remote",
   "doc": "Invoked with each batch of records polled from the subscribed topics.",
   "presence": "required",
   "annotations": ["$functionConfig"],
   "params": [ ],
-  "returns": [{ "name": "error" }, { "name": "()" }]
+  "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+  "returnId": "$service.onConsumerRecord.returns"
 }
 ```
 
 | Field | Meaning |
 |---|---|
+| `id` | **Required.** Hierarchical: the owning `serviceTypes[].id` plus this handler's `name`. Section 0. |
 | `name` | Under `subset`, the method name to emit. Under `many`, always `"*"`, since the user names each instance. |
 | `kind` | `"remote"` or `"resource"`. |
 | `addMode` | `subset` (default when absent) or `many`. Section 5.1. |
@@ -323,6 +375,7 @@ block, so it lives on each option as `addMode`. Section 5.1.
 | `annotations` | Ids of annotations with `attachPoint: "function"`. |
 | `returnAnnotations` | Ids of annotations with `attachPoint: "return"`. |
 | `returns` | `TypeRef` or a union. |
+| `returnId` | **Required exactly when `returns` is present.** Hierarchical: this handler's `id` plus the fixed segment `returns`. |
 
 A `resource` handler is identified by its accessor and path, matching the language form
 `resource function <accessor> <path>()`. Both are required for `kind: "resource"` and neither
@@ -521,17 +574,19 @@ Asymmetric constraints use `role` instead of positional members:
 
 ```json
 {
+  "id": "$service.onUpdate.afterEntry",
   "name": "afterEntry",
   "doc": "The row state after the change.",
-  "type": { "name": "record {}" },
+  "type": { "name": "record {}", "builtin": true },
   "presence": "required",
-  "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}" }, "shapes": [{ "form": "bare" }] }] },
+  "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }] },
   "annotations": ["$payload"]
 }
 ```
 
 | Field | Meaning |
 |---|---|
+| `id` | **Required.** Hierarchical: the owning handler's `id` plus this parameter's `name`. On an `addMode: "many"` slot this names the slot itself, not each user named occurrence. Section 0. |
 | `name` | The parameter name to emit. Required on every fixed slot, omitted only when `addMode` is `"many"`. |
 | `doc` | **Required.** What this parameter carries. Section 5.2. |
 | `deprecated` | Optional. Section 5.3. |
@@ -590,8 +645,8 @@ type in one or more ways. A binding is a set of independent variants that share 
 ```json
 "dataBinding": {
   "typedescs": [
-    { "constraint": { "name": "anydata" }, "excludes": [{ "name": "AnydataMessage" }], "shapes": [{ "form": "bare" }] },
-    { "constraint": { "name": "anydata" }, "shapes": [{ "form": "included", "envelope": { "name": "AnydataMessage" }, "bindableFields": ["content"] }] }
+    { "constraint": { "name": "anydata", "builtin": true }, "excludes": [{ "name": "AnydataMessage" }], "shapes": [{ "form": "bare" }] },
+    { "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "included", "envelope": { "name": "AnydataMessage" }, "bindableFields": ["content"] }] }
   ]
 }
 ```
@@ -628,8 +683,8 @@ independently:
 ```json
 "dataBinding": {
   "typedescs": [
-    { "constraint": { "name": "anydata" }, "excludes": [{ "name": "AnydataConsumerRecord" }], "shapes": [{ "form": "array", "element": "bare" }] },
-    { "constraint": { "name": "anydata" }, "shapes": [{ "form": "array", "element": "included", "envelope": { "name": "AnydataConsumerRecord" }, "bindableFields": ["value"] }] }
+    { "constraint": { "name": "anydata", "builtin": true }, "excludes": [{ "name": "AnydataConsumerRecord" }], "shapes": [{ "form": "array", "element": "bare" }] },
+    { "constraint": { "name": "anydata", "builtin": true }, "shapes": [{ "form": "array", "element": "included", "envelope": { "name": "AnydataConsumerRecord" }, "bindableFields": ["value"] }] }
   ]
 }
 ```
@@ -648,7 +703,7 @@ Two bounds that happen to share shapes are still two variants. FTP's CSV rows ma
       ]
     },
     {
-      "constraint": { "name": "record {}" },
+      "constraint": { "name": "record {}", "builtin": true },
       "shapes": [
         { "form": "array", "element": "bare" },
         { "form": "stream", "element": "bare", "completionType": { "name": "error?" } }

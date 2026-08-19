@@ -3,6 +3,8 @@
 
   "listeners": [
     {
+      "id": "$listener",
+      "doc": "Streams row-level changes from the PostgreSQL logical replication slot and dispatches each captured event to the attached service.",
       "type": { "name": "CdcListener" },
       "services": ["$service"],
       "multipleServicesAllowed": true,
@@ -18,6 +20,7 @@
   "serviceTypes": [
     {
       "id": "$service",
+      "doc": "Consumes row-level change events captured from the subscribed PostgreSQL tables and dispatches each event to the matching handler.",
       "type": { "name": "Service", "packageInfo": { "org": "ballerinax", "packageName": "cdc", "moduleName": "cdc", "version": "1.4.0" } },
       "concrete": false,
       "multipleListenersAllowed": true,
@@ -26,122 +29,144 @@
         "backedByConcreteType": false,
         "options": [
           {
+            "id": "$service.onRead",
             "name": "onRead",
             "kind": "remote",
             "doc": "Invoked for each row captured during the initial snapshot of a table, before streaming of live changes from the replication slot begins.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onRead.afterEntry",
                 "name": "afterEntry",
                 "doc": "The row as captured. Declare a record type to project its columns, see the rowState data-binding rule.",
-                "type": { "name": "record {}" },
+                "type": { "name": "record {}", "builtin": true },
                 "presence": "required",
-                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}" }, "shapes": [{ "form": "bare" }] }] }
+                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
               },
               {
+                "id": "$service.onRead.tableName",
                 "name": "tableName",
                 "doc": "Name of the table the row came from, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
-                "type": { "name": "string" },
+                "type": { "name": "string", "builtin": true },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onRead.returns"
           },
           {
+            "id": "$service.onCreate",
             "name": "onCreate",
             "kind": "remote",
             "doc": "Invoked when a row is inserted.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onCreate.afterEntry",
                 "name": "afterEntry",
                 "doc": "The row's state after the insert. Declare a record type to project its columns, see the rowState data-binding rule.",
-                "type": { "name": "record {}" },
+                "type": { "name": "record {}", "builtin": true },
                 "presence": "required",
-                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}" }, "shapes": [{ "form": "bare" }] }] }
+                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
               },
               {
+                "id": "$service.onCreate.tableName",
                 "name": "tableName",
                 "doc": "Name of the table the change occurred in, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
-                "type": { "name": "string" },
+                "type": { "name": "string", "builtin": true },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onCreate.returns"
           },
           {
+            "id": "$service.onUpdate",
             "name": "onUpdate",
             "kind": "remote",
             "doc": "Invoked when a row is updated, with both the pre- and post-change images of the row. Unless the table's REPLICA IDENTITY is set to FULL, the pre-image carries only the columns that make up the replica identity (the primary key by default), with the rest unset.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onUpdate.beforeEntry",
                 "name": "beforeEntry",
                 "doc": "The row's state before the update.",
-                "type": { "name": "record {}" },
+                "type": { "name": "record {}", "builtin": true },
                 "presence": "required",
-                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}" }, "shapes": [{ "form": "bare" }] }] }
+                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
               },
               {
+                "id": "$service.onUpdate.afterEntry",
                 "name": "afterEntry",
                 "doc": "The row's state after the update.",
-                "type": { "name": "record {}" },
+                "type": { "name": "record {}", "builtin": true },
                 "presence": "required",
-                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}" }, "shapes": [{ "form": "bare" }] }] }
+                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
               },
               {
+                "id": "$service.onUpdate.tableName",
                 "name": "tableName",
                 "doc": "Name of the table the change occurred in, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
-                "type": { "name": "string" },
+                "type": { "name": "string", "builtin": true },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onUpdate.returns"
           },
           {
+            "id": "$service.onDelete",
             "name": "onDelete",
             "kind": "remote",
             "doc": "Invoked when a row is deleted. Only the pre-change image is available, and unless the table's REPLICA IDENTITY is set to FULL, it carries only the columns that make up the replica identity (the primary key by default).",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onDelete.beforeEntry",
                 "name": "beforeEntry",
                 "doc": "The row's state immediately before it was deleted.",
-                "type": { "name": "record {}" },
+                "type": { "name": "record {}", "builtin": true },
                 "presence": "required",
-                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}" }, "shapes": [{ "form": "bare" }] }] }
+                "dataBinding": { "typedescs": [{ "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }] }
               },
               {
+                "id": "$service.onDelete.tableName",
                 "name": "tableName",
                 "doc": "Name of the table the change occurred in, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
-                "type": { "name": "string" },
+                "type": { "name": "string", "builtin": true },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onDelete.returns"
           },
           {
+            "id": "$service.onTruncate",
             "name": "onTruncate",
             "kind": "remote",
             "doc": "Invoked when a table is truncated. No row images are available, only which table was affected.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onTruncate.tableName",
                 "name": "tableName",
                 "doc": "Name of the table that was truncated, useful when one service handles several tables. Omit the parameter entirely if it is not needed.",
-                "type": { "name": "string" },
+                "type": { "name": "string", "builtin": true },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onTruncate.returns"
           },
           {
+            "id": "$service.onError",
             "name": "onError",
             "kind": "remote",
             "doc": "Invoked when the connector fails to capture or dispatch a change event.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onError.cdcError",
                 "name": "cdcError",
                 "doc": "The failure that interrupted change capture.",
                 "type": {
@@ -151,7 +176,8 @@
                 "presence": "required"
               }
             ],
-            "returns": { "name": "()" }
+            "returns": { "name": "()", "builtin": true },
+            "returnId": "$service.onError.returns"
           }
         ]
       },

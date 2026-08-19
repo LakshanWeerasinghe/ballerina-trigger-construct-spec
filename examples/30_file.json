@@ -3,6 +3,8 @@
 
   "listeners": [
     {
+      "id": "$listener",
+      "doc": "Polls the watched directory on its configured interval and dispatches each detected file create, modify, or delete event to the attached service.",
       "type": { "name": "Listener" },
       "services": ["$service"],
       "multipleServicesAllowed": true,
@@ -13,6 +15,7 @@
   "serviceTypes": [
     {
       "id": "$service",
+      "doc": "Receives file system change events for the watched directory: created, modified, and deleted files.",
       "type": { "name": "Service" },
       "concrete": false,
       "multipleListenersAllowed": true,
@@ -20,12 +23,14 @@
         "backedByConcreteType": false,
         "options": [
           {
+            "id": "$service.onCreate",
             "name": "onCreate",
             "kind": "remote",
             "doc": "Invoked when a new file appears in the watched directory, or in one of its subdirectories when the listener is configured to recurse. Declares no return type; the file module rejects any return clause on this handler.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onCreate.fileEvent",
                 "name": "fileEvent",
                 "doc": "The absolute file URI in name and the triggering operation, always \"create\", in operation.",
                 "type": { "name": "FileEvent" },
@@ -34,12 +39,14 @@
             ]
           },
           {
+            "id": "$service.onModify",
             "name": "onModify",
             "kind": "remote",
             "doc": "Invoked when an existing file's contents or attributes change in the watched directory. Declares no return type; the file module rejects any return clause on this handler.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onModify.fileEvent",
                 "name": "fileEvent",
                 "doc": "The absolute file URI in name and the triggering operation, always \"modify\", in operation.",
                 "type": { "name": "FileEvent" },
@@ -48,12 +55,14 @@
             ]
           },
           {
+            "id": "$service.onDelete",
             "name": "onDelete",
             "kind": "remote",
             "doc": "Invoked when a file disappears from the watched directory. There is no file content or metadata beyond the event itself, because the file is already gone. Declares no return type; the file module rejects any return clause on this handler.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onDelete.fileEvent",
                 "name": "fileEvent",
                 "doc": "The absolute file URI in name and the triggering operation, always \"delete\", in operation.",
                 "type": { "name": "FileEvent" },

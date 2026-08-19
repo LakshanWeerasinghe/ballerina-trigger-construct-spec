@@ -2,12 +2,19 @@
   "version": "v1.0",
 
   "listeners": [
-    { "type": { "name": "Listener" }, "services": ["$service"], "multipleServicesAllowed": false }
+    {
+      "id": "$listener",
+      "doc": "Polls the configured Azure Files share on its configured interval and dispatches each detected file to the attached service.",
+      "type": { "name": "Listener" },
+      "services": ["$service"],
+      "multipleServicesAllowed": false
+    }
   ],
 
   "serviceTypes": [
     {
       "id": "$service",
+      "doc": "Receives files detected on the watched Azure Files share, typed by extension, with an untyped fallback and an error handler.",
       "type": { "name": "Service" },
       "concrete": false,
       "multipleListenersAllowed": true,
@@ -17,29 +24,34 @@
         "backedByConcreteType": false,
         "options": [
           {
+            "id": "$service.onFileText",
             "name": "onFileText",
             "kind": "remote",
             "doc": "Invoked for each file whose name ends in .txt, or that matches the pattern set on @files:FunctionConfig. Falls through to onFile when not declared.",
             "presence": "optional",
             "annotations": ["$functionConfig"],
             "params": [
-              { "name": "content", "doc": "The file's text content, decoded as UTF-8.", "type": { "name": "string" }, "presence": "required" },
+              { "id": "$service.onFileText.content", "name": "content", "doc": "The file's text content, decoded as UTF-8.", "type": { "name": "string", "builtin": true }, "presence": "required" },
               {
+                "id": "$service.onFileText.fileInfo",
                 "name": "fileInfo",
                 "doc": "The file's share name, path, size, ETag, and last-modified time.",
                 "type": { "name": "FileInfo" },
                 "presence": "optional"
               },
               {
+                "id": "$service.onFileText.caller",
                 "name": "caller",
                 "doc": "The share connection, for reading or writing other files while this one is being processed.",
                 "type": { "name": "Caller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onFileText.returns"
           },
           {
+            "id": "$service.onFileJson",
             "name": "onFileJson",
             "kind": "remote",
             "doc": "Invoked for each file whose name ends in .json, or that matches the pattern set on @files:FunctionConfig. Falls through to onFile when not declared.",
@@ -47,33 +59,38 @@
             "annotations": ["$functionConfig"],
             "params": [
               {
+                "id": "$service.onFileJson.content",
                 "name": "content",
                 "doc": "The parsed content, bind a record type to project it. Binding is strict: the content must match the target type exactly.",
-                "type": { "name": "json" },
+                "type": { "name": "json", "builtin": true },
                 "presence": "required",
                 "dataBinding": {
                   "typedescs": [
-                    { "constraint": { "name": "json" }, "shapes": [{ "form": "bare" }] },
-                    { "constraint": { "name": "record {}" }, "shapes": [{ "form": "bare" }] }
+                    { "constraint": { "name": "json", "builtin": true }, "shapes": [{ "form": "bare" }] },
+                    { "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }
                   ]
                 }
               },
               {
+                "id": "$service.onFileJson.fileInfo",
                 "name": "fileInfo",
                 "doc": "The file's share name, path, size, ETag, and last-modified time.",
                 "type": { "name": "FileInfo" },
                 "presence": "optional"
               },
               {
+                "id": "$service.onFileJson.caller",
                 "name": "caller",
                 "doc": "The share connection, for reading or writing other files while this one is being processed.",
                 "type": { "name": "Caller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onFileJson.returns"
           },
           {
+            "id": "$service.onFileXml",
             "name": "onFileXml",
             "kind": "remote",
             "doc": "Invoked for each file whose name ends in .xml, or that matches the pattern set on @files:FunctionConfig. Falls through to onFile when not declared.",
@@ -81,33 +98,38 @@
             "annotations": ["$functionConfig"],
             "params": [
               {
+                "id": "$service.onFileXml.content",
                 "name": "content",
                 "doc": "The parsed content, bind a record type to project it from the document. Binding is strict.",
-                "type": { "name": "xml" },
+                "type": { "name": "xml", "builtin": true },
                 "presence": "required",
                 "dataBinding": {
                   "typedescs": [
-                    { "constraint": { "name": "xml" }, "shapes": [{ "form": "bare" }] },
-                    { "constraint": { "name": "record {}" }, "shapes": [{ "form": "bare" }] }
+                    { "constraint": { "name": "xml", "builtin": true }, "shapes": [{ "form": "bare" }] },
+                    { "constraint": { "name": "record {}", "builtin": true }, "shapes": [{ "form": "bare" }] }
                   ]
                 }
               },
               {
+                "id": "$service.onFileXml.fileInfo",
                 "name": "fileInfo",
                 "doc": "The file's share name, path, size, ETag, and last-modified time.",
                 "type": { "name": "FileInfo" },
                 "presence": "optional"
               },
               {
+                "id": "$service.onFileXml.caller",
                 "name": "caller",
                 "doc": "The share connection, for reading or writing other files while this one is being processed.",
                 "type": { "name": "Caller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onFileXml.returns"
           },
           {
+            "id": "$service.onFileCsv",
             "name": "onFileCsv",
             "kind": "remote",
             "doc": "Invoked for each file whose name ends in .csv, or that matches the pattern set on @files:FunctionConfig. Declaring a stream parameter reads the file in chunks instead of loading it into memory. Falls through to onFile when not declared.",
@@ -115,58 +137,63 @@
             "annotations": ["$functionConfig"],
             "params": [
               {
+                "id": "$service.onFileCsv.content",
                 "name": "content",
                 "doc": "The parsed rows, as batched or streamed string rows or records; the field names of a record row come from the header row. Binding is strict.",
                 "type": [
-                  { "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string" } } },
-                  { "shape": "array", "elementType": { "name": "record {}" } },
+                  { "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string", "builtin": true } } },
+                  { "shape": "array", "elementType": { "name": "record {}", "builtin": true } },
                   {
                     "shape": "stream",
-                    "elementType": { "shape": "array", "elementType": { "name": "string" } },
-                    "completionType": [{ "name": "error" }, { "name": "()" }]
+                    "elementType": { "shape": "array", "elementType": { "name": "string", "builtin": true } },
+                    "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
                   },
                   {
                     "shape": "stream",
-                    "elementType": { "name": "record {}" },
-                    "completionType": [{ "name": "error" }, { "name": "()" }]
+                    "elementType": { "name": "record {}", "builtin": true },
+                    "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
                   }
                 ],
                 "presence": "required",
                 "dataBinding": {
                   "typedescs": [
                     {
-                      "constraint": { "shape": "array", "elementType": { "name": "string" } },
+                      "constraint": { "shape": "array", "elementType": { "name": "string", "builtin": true } },
                       "shapes": [
                         { "form": "array", "element": "bare" },
-                        { "form": "stream", "element": "bare", "completionType": [{ "name": "error" }, { "name": "()" }] }
+                        { "form": "stream", "element": "bare", "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
                       ]
                     },
                     {
-                      "constraint": { "name": "record {}" },
+                      "constraint": { "name": "record {}", "builtin": true },
                       "shapes": [
                         { "form": "array", "element": "bare" },
-                        { "form": "stream", "element": "bare", "completionType": [{ "name": "error" }, { "name": "()" }] }
+                        { "form": "stream", "element": "bare", "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }] }
                       ]
                     }
                   ]
                 }
               },
               {
+                "id": "$service.onFileCsv.fileInfo",
                 "name": "fileInfo",
                 "doc": "The file's share name, path, size, ETag, and last-modified time.",
                 "type": { "name": "FileInfo" },
                 "presence": "optional"
               },
               {
+                "id": "$service.onFileCsv.caller",
                 "name": "caller",
                 "doc": "The share connection, for reading or writing other files while this one is being processed.",
                 "type": { "name": "Caller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onFileCsv.returns"
           },
           {
+            "id": "$service.onFile",
             "name": "onFile",
             "kind": "remote",
             "doc": "Invoked for any file no typed handler matched, and as the fallback when no typed handler is declared. Content arrives as raw bytes.",
@@ -174,53 +201,61 @@
             "annotations": ["$functionConfig"],
             "params": [
               {
+                "id": "$service.onFile.content",
                 "name": "content",
                 "doc": "The file's bytes. Declare the stream form to read large files in chunks rather than loading them into memory.",
                 "type": [
-                  { "shape": "array", "elementType": { "name": "byte" } },
+                  { "shape": "array", "elementType": { "name": "byte", "builtin": true } },
                   {
                     "shape": "stream",
-                    "elementType": { "shape": "array", "elementType": { "name": "byte" } },
-                    "completionType": [{ "name": "error" }, { "name": "()" }]
+                    "elementType": { "shape": "array", "elementType": { "name": "byte", "builtin": true } },
+                    "completionType": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }]
                   }
                 ],
                 "presence": "required"
               },
               {
+                "id": "$service.onFile.fileInfo",
                 "name": "fileInfo",
                 "doc": "The file's share name, path, size, ETag, and last-modified time.",
                 "type": { "name": "FileInfo" },
                 "presence": "optional"
               },
               {
+                "id": "$service.onFile.caller",
                 "name": "caller",
                 "doc": "The share connection, for reading or writing other files while this one is being processed.",
                 "type": { "name": "Caller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onFile.returns"
           },
           {
+            "id": "$service.onError",
             "name": "onError",
             "kind": "remote",
             "doc": "Invoked when a poll, download, or content-binding failure occurs. Without it, the failure is logged and polling continues.",
             "presence": "optional",
             "params": [
               {
+                "id": "$service.onError.err",
                 "name": "err",
                 "doc": "The failure that interrupted processing.",
                 "type": { "name": "Error" },
                 "presence": "required"
               },
               {
+                "id": "$service.onError.caller",
                 "name": "caller",
                 "doc": "The share connection, for acting on the share while handling the failure.",
                 "type": { "name": "Caller" },
                 "presence": "optional"
               }
             ],
-            "returns": [{ "name": "error" }, { "name": "()" }]
+            "returns": [{ "name": "error", "builtin": true }, { "name": "()", "builtin": true }],
+            "returnId": "$service.onError.returns"
           }
         ]
       },

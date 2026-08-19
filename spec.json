@@ -36,9 +36,9 @@
 
   "$defs": {
     "id": {
-      "description": "An identifier or a reference to one. Always starts with a dollar sign.",
+      "description": "An identifier or a reference to one. Always starts with a dollar sign. A handler, param, or return id is hierarchical: dot separated segments scoping it under its owning construct, for example $service.onMessage.records.",
       "type": "string",
-      "pattern": "^\\$[A-Za-z][A-Za-z0-9_]*$"
+      "pattern": "^\\$[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)*$"
     },
     "idList": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
     "presence": { "enum": ["required", "optional"] },
@@ -68,7 +68,11 @@
               "type": "string",
               "pattern": "^(\\(\\)|record \\{\\}|[A-Za-z_][A-Za-z0-9_]*)$"
             },
-            "packageInfo": { "$ref": "#/$defs/packageInfo" }
+            "packageInfo": { "$ref": "#/$defs/packageInfo" },
+            "builtin": {
+              "description": "Present and true only when name is one of Ballerina's own language types (the basic types, anydata, any, error, (), record {}, and similarly). Absent, never false, for a module type.",
+              "const": true
+            }
           }
         },
         {
@@ -101,7 +105,7 @@
     },
     "listener": {
       "type": "object",
-      "required": ["type", "services", "multipleServicesAllowed"],
+      "required": ["id", "doc", "type", "services", "multipleServicesAllowed"],
       "additionalProperties": false,
       "allOf": [
         {
@@ -113,6 +117,8 @@
         }
       ],
       "properties": {
+        "id": { "description": "Flat, since a listener nests nothing above it. $listener, or $listener1/$listener2 when a connector declares more than one.", "$ref": "#/$defs/id" },
+        "doc": { "description": "What this listener is and when a service attaches to it.", "type": "string", "minLength": 1 },
         "type": { "$ref": "#/$defs/typeRef" },
         "deprecated": {
           "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
@@ -180,10 +186,11 @@
     },
     "serviceType": {
       "type": "object",
-      "required": ["id", "type", "concrete", "multipleListenersAllowed", "handlers"],
+      "required": ["id", "doc", "type", "concrete", "multipleListenersAllowed", "handlers"],
       "additionalProperties": false,
       "properties": {
         "id": { "$ref": "#/$defs/id" },
+        "doc": { "description": "What this service type is for. Required even when concrete, since the id/doc pair is what makes every construct in the file navigable on its own, not only what introspection cannot recover.", "type": "string", "minLength": 1 },
         "type": { "$ref": "#/$defs/typeRef" },
         "deprecated": {
           "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
@@ -226,7 +233,7 @@
     },
     "handlerOption": {
       "type": "object",
-      "required": ["name", "kind", "doc"],
+      "required": ["id", "name", "kind", "doc"],
       "additionalProperties": false,
       "allOf": [
         {
@@ -244,9 +251,15 @@
             "properties": { "name": { "const": "*" } },
             "not": { "required": ["presence"] }
           }
+        },
+        {
+          "if": { "required": ["returns"] },
+          "then": { "description": "A return type present gets its own hierarchical id.", "required": ["returnId"] },
+          "else": { "not": { "required": ["returnId"] } }
         }
       ],
       "properties": {
+        "id": { "description": "Hierarchical: the owning serviceType's id plus this handler's name, for example $service.onMessage.", "$ref": "#/$defs/id" },
         "name": { "description": "The handler method name, or * for an open handler.", "type": "string", "minLength": 1 },
         "kind": { "enum": ["remote", "resource"] },
         "addMode": {
@@ -273,6 +286,7 @@
           "items": { "$ref": "#/$defs/param" }
         },
         "returns": { "$ref": "#/$defs/typeRefOrUnion" },
+        "returnId": { "description": "Hierarchical: this handler's id plus the fixed segment returns, for example $service.onMessage.returns. Required exactly when returns is present.", "$ref": "#/$defs/id" },
         "accessor": {
           "description": "Resource kind only. The accessor in resource function <accessor> <path>().",
           "$ref": "#/$defs/valueSpec"
@@ -297,9 +311,10 @@
     },
     "param": {
       "type": "object",
-      "required": ["type", "presence", "doc"],
+      "required": ["id", "type", "presence", "doc"],
       "additionalProperties": false,
       "properties": {
+        "id": { "description": "Hierarchical: the owning handler's id plus this parameter's name, for example $service.onMessage.records. On an addMode many slot, names the slot itself, not each user named occurrence.", "$ref": "#/$defs/id" },
         "name": { "description": "The parameter name to emit.", "type": "string", "minLength": 1 },
         "doc": {
           "description": "What this parameter carries. Required for the same reason as a handler's doc. On a many slot it describes what one occurrence is.",
