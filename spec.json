@@ -42,6 +42,11 @@
     },
     "idList": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/id" } },
     "presence": { "enum": ["required", "optional"] },
+    "deprecatedReason": {
+      "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
+      "type": "string",
+      "minLength": 1
+    },
     "packageInfo": {
       "description": "The package a cross module type comes from.",
       "type": "object",
@@ -135,11 +140,7 @@
         "id": { "description": "Flat, since a listener nests nothing above it. $listener, or $listener1/$listener2 when a connector declares more than one.", "$ref": "#/$defs/id" },
         "doc": { "description": "What this listener is and when a service attaches to it.", "type": "string", "minLength": 1 },
         "type": { "$ref": "#/$defs/typeRef" },
-        "deprecated": {
-          "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
-          "type": "string",
-          "minLength": 1
-        },
+        "deprecated": { "$ref": "#/$defs/deprecatedReason" },
         "services": { "description": "serviceTypes ids this listener can host.", "$ref": "#/$defs/idList" },
         "multipleServicesAllowed": { "description": "Can one instance of this listener host more than one service at all?", "type": "boolean" },
         "multipleServicesOfSameTypeAllowed": { "description": "Can two of those services be of the same service type? Absent means unconstrained.", "type": "boolean" },
@@ -207,11 +208,7 @@
         "id": { "$ref": "#/$defs/id" },
         "doc": { "description": "What this service type is for. Required even when concrete, since the id/doc pair is what makes every construct in the file navigable on its own, not only what introspection cannot recover.", "type": "string", "minLength": 1 },
         "type": { "$ref": "#/$defs/typeRef" },
-        "deprecated": {
-          "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
-          "type": "string",
-          "minLength": 1
-        },
+        "deprecated": { "$ref": "#/$defs/deprecatedReason" },
         "concrete": { "description": "true when the type declares its own methods and they can be introspected.", "type": "boolean" },
         "multipleListenersAllowed": { "type": "boolean" },
         "annotations": { "description": "Annotation ids with attachPoint service.", "$ref": "#/$defs/idList" },
@@ -281,11 +278,7 @@
           "type": "string",
           "minLength": 1
         },
-        "deprecated": {
-          "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
-          "type": "string",
-          "minLength": 1
-        },
+        "deprecated": { "$ref": "#/$defs/deprecatedReason" },
         "presence": { "$ref": "#/$defs/presence" },
         "annotations": { "description": "Annotation ids with attachPoint function.", "$ref": "#/$defs/idList" },
         "params": {
@@ -329,11 +322,7 @@
           "type": "string",
           "minLength": 1
         },
-        "deprecated": {
-          "description": "Why this construct is deprecated, as prose. A generator emitting Ballerina puts it in the # # Deprecated doc section.",
-          "type": "string",
-          "minLength": 1
-        },
+        "deprecated": { "$ref": "#/$defs/deprecatedReason" },
         "type": { "$ref": "#/$defs/typeRefOrUnion" },
         "presence": { "$ref": "#/$defs/presence" },
         "addMode": { "description": "many means the slot repeats, with the user naming each occurrence.", "enum": ["many"] },

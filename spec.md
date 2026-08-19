@@ -4,7 +4,7 @@
 |---|---|
 | Spec version | v1.0 |
 | Author | Lakshan Weerasinghe (WSO2) |
-| Last revised | 2026-08-11 |
+| Last revised | 2026-08-19 |
 | Reviewed by | Not yet reviewed |
 
 Field reference for the JSON shape in `examples/*.json`. `spec.json` is the machine-checkable
@@ -115,20 +115,9 @@ explicit `()` union member rather than a flag, so a union is also how a nilable 
 
 which are `byte[]`, `string[][]`, `stream<anydata, Error?>`, and `readonly & byte[]`.
 
-**Why a discriminator rather than a key per kind.** A field named `arrayOf` or `streamOf` makes
-every new composite kind a new field, so `map<T>` could not be expressed without changing this
-schema. With `shape` naming the kind, a new kind is a new `shape` value and a row in the table
-above, reusing `elementType` where it fits and adding a part only where the kind genuinely has one.
-Under section 11.1 that is additive.
-
 `shape` is closed, unlike the rule registry in section 6.2. An unrecognised rule can be skipped and
 the rest of the manifest still used; an unrecognised type shape cannot, because the type could not
 be written at all, so it should fail loudly rather than silently.
-
-**Why a tree at all.** Every type inside a composite is itself a `TypeRef`, so it can carry its own
-`packageInfo` and be qualified independently. As a string, `"stream<anydata, Error?>"` gave a
-consumer nothing to attach a module to: the `Error` was invisible, and qualifying whole names
-produced `grpc:stream<anydata, Error?>` or left `Error` bare, neither of which resolves.
 
 ### 1.2 Qualifying a name for output
 
@@ -141,14 +130,14 @@ decision per leaf rather than string surgery:
 |---|---|
 | `{ "name": "Caller" }` | `grpc:Caller` |
 | `{ "name": "anydata", "builtin": true }` | `anydata`, a language type, never qualified |
-| `{ "streamOf": {"name":"anydata","builtin":true}, "completion": [{"name":"Error"},{"name":"()","builtin":true}] }` | `stream<anydata, grpc:Error?>` |
-| `{ "streamOf": {"arrayOf":{"name":"string","builtin":true}}, "completion": [{"name":"error","builtin":true},{"name":"()","builtin":true}] }` | `stream<string[], error?>` |
+| `{ "shape": "stream", "elementType": {"name":"anydata","builtin":true}, "completionType": [{"name":"Error"},{"name":"()","builtin":true}] }` | `stream<anydata, grpc:Error?>` |
+| `{ "shape": "stream", "elementType": {"shape":"array","elementType":{"name":"string","builtin":true}}, "completionType": [{"name":"error","builtin":true},{"name":"()","builtin":true}] }` | `stream<string[], error?>` |
 
-Whether a leaf is a language type or a module type decides how a consumer qualifies it, section
-1.2, so it is a fact the consumer needs and `builtin` states it directly rather than leaving it to
-be inferred. Case is a reliable authoring convention in the corpus, `Error` is the module's error
-subtype and `error` is the language's, but a consumer should read `builtin` rather than pattern
-match on casing.
+Whether a leaf is a language type or a module type decides how a consumer qualifies it, so it is a
+fact the consumer needs and `builtin` states it directly rather than leaving it to be inferred.
+Case is a reliable authoring convention in the corpus, `Error` is the module's error subtype and
+`error` is the language's, but a consumer should read `builtin` rather than pattern match on
+casing.
 
 ### 1.3 `builtin`
 
@@ -161,14 +150,9 @@ match on casing.
 `builtin` is `true` only on Ballerina's own language types: the basic types (`int`, `float`,
 `decimal`, `string`, `boolean`, `byte`), `anydata`, `any`, `error`, `()`, `record {}`, `json`,
 `xml`, `map`, `table`, and similarly. It is absent, never `false`, on every module type, following
-the same leave it out rule as everywhere else in this file.
-
-**Why this is stated rather than left to introspection.** Every other fact in this file earns its
-place by being something introspection cannot recover, section 4 of `README.md`. Ballerina's set of
-language types is technically fixed and could be hardcoded by a consumer, but hardcoding a second
-copy of that set in every consumer, kept in sync by hand as the language adds one, is worse than a
-one bit flag stated once per leaf. So `builtin` is metadata for convenience, not for
-non-introspectability, the one field in this schema justified that way.
+the same leave it out rule as everywhere else in this file. Unlike the rest of this file, `builtin`
+is stated for convenience rather than non-introspectability: hardcoding Ballerina's language-type
+set in every consumer, kept in sync by hand as the language grows, is worse than one flag per leaf.
 
 ### 1.4 `subtypeFamily`
 
@@ -207,12 +191,8 @@ them, and whichever is declared has its `body` field bound the same way `Anydata
 }
 ```
 
-Without `subtypeFamily` the only way to say this would be one `typedescs[]` entry per concrete
-subtype, `http:Ok`, `http:Created`, and every other status code response, plus every user defined
-narrowing, none of which this file could ever enumerate since user narrowings do not exist until a
-consumer's own generation session creates one. `subtypeFamily` names the module's own type instead
-and leaves "which subtypes exist" to introspection, the same trade `builtin` makes for the
-language's fixed type set, only here the set is genuinely open rather than fixed.
+`subtypeFamily` names the module's own type and leaves "which subtypes exist" to introspection,
+since a `typedescs[]` entry per concrete subtype could never enumerate a user's own narrowings.
 
 `excludes` reads the same way it always has, disambiguating the same declared type from satisfying
 two variants at once, section 9, except now the exclusion is a whole family: a user record that
@@ -629,11 +609,6 @@ Every subject also accepts:
 
 The first three appear in the corpus. The rest are reachable without touching the schema.
 
-`structure.atLeastOne` shows the design working. README section 6 originally ruled out "at least
-one of N" because the old closed enum made it a schema change. Evidence turned up in the SMB
-library, which requires at least one `onFile*` handler or `onFileDelete`, and expressing it cost
-one registry row and one rule instance.
-
 Asymmetric constraints use `role` instead of positional members:
 
 ```json
@@ -708,10 +683,6 @@ it, and the annotation never reaches back with a list of what it applies to:
 | `function` | `handlers.options[].annotations` |
 | `return` | `handlers.options[].returns.annotations` |
 | `parameter` | `params[].annotations` |
-
-This replaces the earlier `appliesTo` reverse list, which named service types rather than the
-attachment site. Every annotation in the corpus is now reachable by forward reference, so
-`appliesTo` was removed rather than kept as an alternative.
 
 No `fieldOverrides`. Every corpus instance was an unused empty array.
 
@@ -906,13 +877,9 @@ consumers.
 
 ### 11.4 Why minor bumps are safe
 
-The open vocabulary and the skip unknown policy in section 6 are what make this work. Because a
-consumer that meets an unfamiliar rule id skips it instead of failing, a new constraint kind is a
-registry row and is additive by construction. Without that policy every new rule kind would force a
-major bump.
-
-The corollary for authors: anything expected to grow should get an open vocabulary before v1.0
-freezes.
+The open vocabulary and skip-unknown policy in section 6 make a new constraint kind a registry row,
+additive by construction, rather than a schema change. The corollary for authors: anything expected
+to grow should get an open vocabulary before v1.0 freezes.
 
 ### 11.5 The v1.0 baseline
 

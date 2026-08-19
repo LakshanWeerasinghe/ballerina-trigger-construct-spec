@@ -27,22 +27,29 @@ public type TriggerModel record {|
 #          `packageInfo` is set. `()` is nil, and `record {}` is an open record; both are atomic
 # + packageInfo - Only alongside `name`, and only when the type is not from the module this file
 #                 describes
+# + builtin - Only alongside `name`. `true` when `name` is one of Ballerina's own language types.
+#             Absent, never `false`, for a module type
+# + subtypeFamily - Only alongside `name`. `true` when this reference stands for the named type and
+#                   every introspectable subtype of it, not the exact type alone. Meaningful inside
+#                   `DataBinding`, see spec.md section 1.4
 # + shape - How a constructed type is built. Which parts apply follows from it, see spec.md
 #           section 1.1
-# + elementType - The type the shape holds: the element of an `array`, the value of a `stream`
+# + elementType - The type the shape holds: the element of an `array`, the value of a `stream`,
+#                 the intersected type of a `readonly`
 # + completionType - `stream` only, and optional: the type the stream terminates with
 public type TypeRef record {|
     string name?;
     PackageInfo packageInfo?;
+    boolean builtin?;
+    boolean subtypeFamily?;
     TypeShape shape?;
     TypeRefOrUnion elementType?;
     TypeRefOrUnion completionType?;
 |};
 
 # How a constructed type is built. Closed, unlike the rule registry: an unrecognised shape cannot be
-# skipped the way an unrecognised rule can, because the type could not be written at all. Growing
-# it is additive, see spec.md section 11.1.
-public type TypeShape "array"|"stream";
+# skipped the way an unrecognised rule can, because the type could not be written at all.
+public type TypeShape "array"|"stream"|"readonly";
 
 # Coordinates identifying the package/module a cross-module type reference comes from.
 #
@@ -65,6 +72,9 @@ public type Presence "required"|"optional";
 
 # A listener entry point.
 #
+# + id - Flat, since a listener nests inside nothing. `$listener`, or `$listener1`/`$listener2` when
+#        a connector declares more than one
+# + doc - What this listener is and when a service attaches to it
 # + 'type - `TypeRef` for the listener class
 # + deprecated - Why this listener is deprecated. Present only when the library still accepts it
 #                but no longer recommends it
@@ -77,6 +87,8 @@ public type Presence "required"|"optional";
 # + platformDependencies - Native/binary dependencies needed at build time, never referenced by
 #                          Ballerina `import`
 public type Listener record {|
+    string id;
+    string doc;
     TypeRef 'type;
     string deprecated?;
     string[] services;
@@ -129,13 +141,9 @@ public type Acquisition record {|
     string note;
 |};
 
-# An OS specific native library the JVM must load at run time.
-#
-# Modeled separately from the jar because its absence is not a build failure. The package compiles
-# and the service then fails at run time, so nothing in the build graph records the requirement.
-#
-# No environment variable field, since it is determined by `os` and is stated once in spec.md
-# section 2.
+# An OS-specific native library the JVM must load at run time. Modeled separately from the jar
+# because its absence is not a build failure: the package compiles and the service then fails at
+# run time, so nothing in the build graph records the requirement.
 #
 # + os - Target operating system
 # + file - The library file name to install for that OS
@@ -147,6 +155,8 @@ public type NativeLibrary record {|
 # One service-type alternative this connector exposes.
 #
 # + id - Referenced from `Listener.services` and sibling constructs. Every id starts with `$`
+# + doc - What this service type is for. Required even when `concrete` is `true`: id and doc
+#         together make every construct navigable on its own, not only what introspection recovers
 # + 'type - `TypeRef` for the service object type
 # + concrete - `true` if the type declares its own methods directly (introspectable); `false` for marker/abstract types
 # + multipleListenersAllowed - Can one service instance attach to more than one listener at once?
@@ -158,6 +168,7 @@ public type NativeLibrary record {|
 # + rules - Relationship constraints scoped to this service type
 public type ServiceType record {|
     string id;
+    string doc;
     TypeRef 'type;
     string deprecated?;
     boolean concrete;
@@ -212,6 +223,7 @@ public type ValueSpec record {|
 
 # One legal handler shape.
 #
+# + id - Hierarchical: the owning `ServiceType.id` plus this handler's `name`
 # + name - Under `subset`, the method name to emit. Under `many`, always `"*"`, since the user
 #          names each instance
 # + kind - `remote` or `resource`
@@ -225,13 +237,14 @@ public type ValueSpec record {|
 # + presence - Only meaningful under `addMode: "subset"`, a `many` shape has no fixed occurrence
 #              count to require
 # + annotations - Ids into the top-level `annotations[]`, `attachPoint: "function"`
-# + returnAnnotations - Ids into the top-level `annotations[]`, `attachPoint: "return"`
 # + params - The handler's parameter list
-# + returns - `TypeRef` or a union
+# + returns - The return type, grouped like a `Param`. Omitted when the handler's language form
+#             forbids a return clause
 # + accessor - Resource kind only. The accessor in `resource function <accessor> <path>()`. HTTP
 #              puts its verbs here, GraphQL puts `get` or `subscribe`
 # + path - Resource kind only. The path in `resource function <accessor> <path>()`
 public type HandlerOption record {|
+    string id;
     string name;
     HandlerKind kind;
     AddMode addMode?;
@@ -239,15 +252,32 @@ public type HandlerOption record {|
     string deprecated?;
     Presence presence?;
     string[] annotations?;
-    string[] returnAnnotations?;
     Param[] params?;
-    TypeRefOrUnion 'returns?;
+    ReturnSpec 'returns?;
     ValueSpec accessor?;
     ValueSpec path?;
 |};
 
+# A handler's return type, grouped like a `Param` since it can carry the same id/dataBinding/
+# annotations facts. No `name` or `presence`, a return has neither.
+#
+# + id - Hierarchical: the owning handler's id plus the fixed segment `returns`, e.g.
+#        `$service.onMessage.returns`
+# + 'type - `TypeRef` or a union
+# + dataBinding - Present only when one union member is a user-defined type the runtime serializes
+#                 out through. Same shape as a `Param`'s, direction reversed: outbound, not inbound
+# + annotations - Ids into the top-level `annotations[]`, `attachPoint: "return"`
+public type ReturnSpec record {|
+    string id;
+    TypeRefOrUnion 'type;
+    DataBinding dataBinding?;
+    string[] annotations?;
+|};
+
 # One parameter of a handler option.
 #
+# + id - Hierarchical: the owning handler's id plus this parameter's `name`. On an `addMode: "many"`
+#        slot this names the slot itself, not each user-named occurrence
 # + name - The parameter name to emit. Required on every fixed slot, since codegen renders the
 #          parameter from this entry alone. Omitted only when `addMode` is `"many"`, where the
 #          user names each occurrence
@@ -261,6 +291,7 @@ public type HandlerOption record {|
 #                 projected into a user-defined type
 # + annotations - Ids into `annotations[]`, `attachPoint: "parameter"`
 public type Param record {|
+    string id;
     string name?;
     string doc;
     string deprecated?;
@@ -368,9 +399,8 @@ public type AttachPoint "service"|"function"|"parameter"|"return";
 # A reusable annotation reference, defined once and referenced by id elsewhere.
 #
 # + id - Referenced from whichever construct the annotation attaches to: `ServiceType.annotations`
-#        (service), `HandlerOption.annotations` (function), `HandlerOption.returnAnnotations`
-#        (return), `Param.annotations` (parameter), or a `Rule` subject of kind
-#        `annotation`/`annotationField`
+#        (service), `HandlerOption.annotations` (function), `ReturnSpec.annotations` (return),
+#        `Param.annotations` (parameter), or a `Rule` subject of kind `annotation`/`annotationField`
 # + 'type - `TypeRef` for the annotation type, can be cross-module
 # + attachPoint - Where this annotation attaches in Ballerina source. Determines which construct
 #                 field carries the reference, every attach point has a precise one, so there is
