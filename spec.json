@@ -100,6 +100,17 @@
             "elementType": { "description": "The value type.", "$ref": "#/$defs/typeRefOrUnion" },
             "completionType": { "description": "Optional. What the stream terminates with.", "$ref": "#/$defs/typeRefOrUnion" }
           }
+        },
+        {
+          "title": "readonly",
+          "description": "A readonly intersection terminates with nothing, so it has no completionType.",
+          "type": "object",
+          "required": ["shape", "elementType"],
+          "additionalProperties": false,
+          "properties": {
+            "shape": { "const": "readonly" },
+            "elementType": { "description": "The type readonly intersects with.", "$ref": "#/$defs/typeRefOrUnion" }
+          }
         }
       ]
     },

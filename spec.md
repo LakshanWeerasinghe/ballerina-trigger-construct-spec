@@ -104,14 +104,16 @@ explicit `()` union member rather than a flag, so a union is also how a nilable 
 |---|---|---|---|
 | `array` | the element | not applicable, an array terminates with nothing | `T[]` |
 | `stream` | the value | optional, what the stream terminates with | `stream<T>`, `stream<T, C>` |
+| `readonly` | the intersected type | not applicable, an intersection terminates with nothing | `readonly & T` |
 
 ```json
 { "shape": "array", "elementType": { "name": "byte", "builtin": true } }
 { "shape": "array", "elementType": { "shape": "array", "elementType": { "name": "string", "builtin": true } } }
 { "shape": "stream", "elementType": { "name": "anydata", "builtin": true }, "completionType": [{ "name": "Error" }, { "name": "()", "builtin": true }] }
+{ "shape": "readonly", "elementType": { "shape": "array", "elementType": { "name": "byte", "builtin": true } } }
 ```
 
-which are `byte[]`, `string[][]`, and `stream<anydata, Error?>`.
+which are `byte[]`, `string[][]`, `stream<anydata, Error?>`, and `readonly & byte[]`.
 
 **Why a discriminator rather than a key per kind.** A field named `arrayOf` or `streamOf` makes
 every new composite kind a new field, so `map<T>` could not be expressed without changing this
